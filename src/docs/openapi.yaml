@@ -1,0 +1,27 @@
+openapi: 3.0.3
+info:
+  title: Conference Management API
+  version: 0.1.0
+servers:
+  - url: /api/v1
+paths:
+  /auth/login:
+    post:
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200': { description: OK }
+
+
+
+
