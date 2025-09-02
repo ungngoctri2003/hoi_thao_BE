@@ -1,4 +1,5 @@
 import { withConn } from '../../config/db';
+import oracledb from 'oracledb';
 
 export type AuditLogRow = {
   ID: number;
@@ -29,7 +30,7 @@ export const auditRepository = {
       const res = await conn.execute(
         `SELECT ID, TS, USER_ID, ACTION_NAME, RESOURCE_NAME, DETAILS, IP_ADDRESS, USER_AGENT, STATUS, CATEGORY FROM AUDIT_LOGS WHERE ID = :id`,
         { id },
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       const rows = (res.rows as any[]) || [];
       return rows[0] || null;
@@ -57,15 +58,15 @@ export const auditRepository = {
            ) t WHERE ROWNUM <= :maxRow
          ) WHERE rn > :minRow`,
         { ...binds, maxRow: offset + limit, minRow: offset },
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       const countRes = await conn.execute(
         `SELECT COUNT(*) AS CNT FROM AUDIT_LOGS WHERE ${where}`,
         binds,
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       const rows = (listRes.rows as any[]) || [];
-      const total = Number(((countRes.rows as any[])[0] as any).CNT);
+      const total = Number((countRes.rows as Array<{CNT: number}>)[0]?.CNT || 0);
       return { rows: rows as AuditLogRow[], total };
     });
   }

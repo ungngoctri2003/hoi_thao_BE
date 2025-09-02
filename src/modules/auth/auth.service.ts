@@ -34,19 +34,17 @@ export const authService = {
     const attendee = await attendeesRepository.findByEmail(input.email);
     if (!attendee) {
       await attendeesRepository.create({
-        ID: 0 as any,
         NAME: input.name,
         EMAIL: input.email,
-        PHONE: null as any,
-        COMPANY: null as any,
-        POSITION: null as any,
-        AVATAR_URL: null as any,
-        DIETARY: null as any,
-        SPECIAL_NEEDS: null as any,
-        DATE_OF_BIRTH: null as any,
-        GENDER: null as any,
-        CREATED_AT: new Date() as any
-      } as any);
+        PHONE: null,
+        COMPANY: null,
+        POSITION: null,
+        AVATAR_URL: null,
+        DIETARY: null,
+        SPECIAL_NEEDS: null,
+        DATE_OF_BIRTH: null,
+        GENDER: null
+      });
     }
     return { id: user.ID };
   },

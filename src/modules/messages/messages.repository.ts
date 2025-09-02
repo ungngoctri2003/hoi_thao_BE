@@ -1,4 +1,5 @@
-import { withConn } from '../../config/db';
+import { withConn } from '../../config/db'
+import oracledb from 'oracledb';
 
 export type MessageRow = {
   ID: number;
@@ -21,15 +22,15 @@ export const messagesRepository = {
            ) t WHERE ROWNUM <= :maxRow
          ) WHERE rn > :minRow`,
         { sessionId, maxRow: offset + limit, minRow: offset },
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       const countRes = await conn.execute(
         `SELECT COUNT(*) AS CNT FROM MESSAGES WHERE SESSION_ID = :sessionId`,
         { sessionId },
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       const rows = (listRes.rows as any[]) || [];
-      const total = Number(((countRes.rows as any[])[0] as any).CNT);
+      const total = Number((countRes.rows as Array<{CNT: number}>)[0]?.CNT || 0);
       return { rows: rows as MessageRow[], total };
     });
   },
@@ -38,19 +39,20 @@ export const messagesRepository = {
     return withConn(async (conn) => {
       const res = await conn.execute(
         `INSERT INTO MESSAGES (SESSION_ID, ATTENDEE_ID, TYPE, CONTENT) VALUES (:sessionId, :attendeeId, :type, :content) RETURNING ID INTO :ID`,
-        { sessionId, attendeeId, type, content, ID: { dir: (require('oracledb') as any).BIND_OUT, type: (require('oracledb') as any).NUMBER } },
+        { sessionId, attendeeId, type, content, ID: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER } },
         { autoCommit: true }
       );
-      const id = (res.outBinds as any).ID[0];
+      const id = (res.outBinds as { ID: number[] }).ID[0];
       const row = await conn.execute(
         `SELECT ID, SESSION_ID, ATTENDEE_ID, TS, TYPE, CONTENT FROM MESSAGES WHERE ID = :id`,
         { id },
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       return ((row.rows as any[])[0]) as MessageRow;
     });
   }
 };
+
 
 
 

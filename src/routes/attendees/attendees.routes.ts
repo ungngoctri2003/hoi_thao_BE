@@ -18,3 +18,4 @@ attendeesRouter.get('/:id/registrations', auth(), rbac('attendees.read'), listRe
 
 
 
+

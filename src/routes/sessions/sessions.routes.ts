@@ -17,3 +17,4 @@ sessionsRouter.post('/sessions/:id/assign-room', auth(), rbac('sessions.write'),
 
 
 
+

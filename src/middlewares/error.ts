@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { logger } from '../app';
 
 export interface AppError extends Error {
   status?: number;
@@ -16,8 +17,15 @@ export function errorHandler(
   const code = err.code || 'INTERNAL_ERROR';
 
   // Log error for debugging
-  console.error(`[${new Date().toISOString()}] Error ${status}: ${message}`);
-  console.error(err.stack);
+  logger.error({ 
+    error: err, 
+    status, 
+    message, 
+    code,
+    stack: err.stack,
+    url: req.url,
+    method: req.method
+  }, 'Request error');
 
   res.status(status).json({
     error: {

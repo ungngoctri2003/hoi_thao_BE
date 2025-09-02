@@ -39,6 +39,58 @@
     {
       "name": "Attendees",
       "description": "Attendee management operations"
+    },
+    {
+      "name": "Registrations",
+      "description": "Conference registration operations"
+    },
+    {
+      "name": "Check-ins",
+      "description": "Check-in management operations"
+    },
+    {
+      "name": "Analytics",
+      "description": "Analytics and reporting operations"
+    },
+    {
+      "name": "Badges",
+      "description": "Badge and achievement operations"
+    },
+    {
+      "name": "Certificates",
+      "description": "Certificate generation operations"
+    },
+    {
+      "name": "Messages",
+      "description": "Real-time messaging operations"
+    },
+    {
+      "name": "Networking",
+      "description": "Networking and matching operations"
+    },
+    {
+      "name": "Profile",
+      "description": "User profile management"
+    },
+    {
+      "name": "Settings",
+      "description": "System settings management"
+    },
+    {
+      "name": "Roles",
+      "description": "Role-based access control"
+    },
+    {
+      "name": "Permissions",
+      "description": "Permission management"
+    },
+    {
+      "name": "Audit",
+      "description": "Audit logging operations"
+    },
+    {
+      "name": "Venue",
+      "description": "Venue and room management"
     }
   ],
   "paths": {
@@ -46,7 +98,9 @@
       "get": {
         "summary": "Health check endpoint",
         "description": "Returns a simple pong response to verify API is working",
-        "tags": ["Health"],
+        "tags": [
+          "Health"
+        ],
         "responses": {
           "200": {
             "description": "Successful response",
@@ -65,7 +119,9 @@
       "get": {
         "summary": "Health check endpoint",
         "description": "Returns server health status",
-        "tags": ["Health"],
+        "tags": [
+          "Health"
+        ],
         "responses": {
           "200": {
             "description": "Server is healthy",
@@ -84,7 +140,9 @@
       "get": {
         "summary": "List conferences",
         "description": "Get paginated list of conferences with optional filtering",
-        "tags": ["Conferences"],
+        "tags": [
+          "Conferences"
+        ],
         "parameters": [
           {
             "name": "page",
@@ -134,7 +192,13 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": ["draft", "published", "active", "completed", "cancelled"]
+              "enum": [
+                "draft",
+                "published",
+                "active",
+                "completed",
+                "cancelled"
+              ]
             }
           }
         ],
@@ -169,7 +233,9 @@
       "post": {
         "summary": "Create conference",
         "description": "Create a new conference",
-        "tags": ["Conferences"],
+        "tags": [
+          "Conferences"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -223,7 +289,9 @@
       "get": {
         "summary": "Get conference by ID",
         "description": "Retrieve a specific conference by its ID",
-        "tags": ["Conferences"],
+        "tags": [
+          "Conferences"
+        ],
         "parameters": [
           {
             "name": "id",
@@ -251,8 +319,8 @@
               }
             }
           },
-          "404": {
-            "description": "Conference not found",
+          "401": {
+            "description": "Unauthorized",
             "content": {
               "application/json": {
                 "schema": {
@@ -261,8 +329,8 @@
               }
             }
           },
-          "401": {
-            "description": "Unauthorized",
+          "404": {
+            "description": "Conference not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -276,7 +344,9 @@
       "patch": {
         "summary": "Update conference",
         "description": "Update an existing conference",
-        "tags": ["Conferences"],
+        "tags": [
+          "Conferences"
+        ],
         "parameters": [
           {
             "name": "id",
@@ -349,7 +419,9 @@
       "delete": {
         "summary": "Delete conference",
         "description": "Delete a conference",
-        "tags": ["Conferences"],
+        "tags": [
+          "Conferences"
+        ],
         "parameters": [
           {
             "name": "id",
@@ -397,7 +469,9 @@
       "patch": {
         "summary": "Change conference status",
         "description": "Change the status of a conference",
-        "tags": ["Conferences"],
+        "tags": [
+          "Conferences"
+        ],
         "parameters": [
           {
             "name": "id",
@@ -472,7 +546,9 @@
       "post": {
         "summary": "User login",
         "description": "Authenticate user and get access token",
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -521,7 +597,9 @@
       "post": {
         "summary": "Refresh access token",
         "description": "Get new access token using refresh token",
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -555,6 +633,2357 @@
           },
           "401": {
             "description": "Invalid refresh token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "summary": "User registration",
+        "description": "Register a new user account",
+        "tags": [
+          "Authentication"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Email already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/forgot-password": {
+      "post": {
+        "summary": "Request password reset",
+        "description": "Send password reset email to user",
+        "tags": [
+          "Authentication"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password reset email sent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/reset-password": {
+      "post": {
+        "summary": "Reset password",
+        "description": "Reset user password using reset token",
+        "tags": [
+          "Authentication"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password reset successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or expired reset token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sessions": {
+      "get": {
+        "summary": "List sessions",
+        "description": "Get paginated list of sessions with optional filtering",
+        "tags": [
+          "Sessions"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of items per page",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "conferenceId",
+            "in": "query",
+            "description": "Filter by conference ID",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of sessions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create session",
+        "description": "Create a new session",
+        "tags": [
+          "Sessions"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSessionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Session created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sessions/{id}": {
+      "get": {
+        "summary": "Get session by ID",
+        "description": "Retrieve a specific session by its ID",
+        "tags": [
+          "Sessions"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Session ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Session details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Session not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update session",
+        "description": "Update an existing session",
+        "tags": [
+          "Sessions"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Session ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSessionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Session updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Session not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete session",
+        "description": "Delete a session",
+        "tags": [
+          "Sessions"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Session ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Session deleted successfully"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Session not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/attendees": {
+      "get": {
+        "summary": "List attendees",
+        "description": "Get paginated list of attendees with optional filtering",
+        "tags": [
+          "Attendees"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of items per page",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Search term for attendee name or email",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of attendees",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendeeListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create attendee",
+        "description": "Create a new attendee",
+        "tags": [
+          "Attendees"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAttendeeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Attendee created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendeeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/attendees/{id}": {
+      "get": {
+        "summary": "Get attendee by ID",
+        "description": "Retrieve a specific attendee by their ID",
+        "tags": [
+          "Attendees"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Attendee ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Attendee details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendeeResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Attendee not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update attendee",
+        "description": "Update an existing attendee",
+        "tags": [
+          "Attendees"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Attendee ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAttendeeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Attendee updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendeeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Attendee not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete attendee",
+        "description": "Delete an attendee",
+        "tags": [
+          "Attendees"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Attendee ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Attendee deleted successfully"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Attendee not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registrations": {
+      "get": {
+        "summary": "List registrations",
+        "description": "Get paginated list of conference registrations",
+        "tags": [
+          "Registrations"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of items per page",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "conferenceId",
+            "in": "query",
+            "description": "Filter by conference ID",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "attendeeId",
+            "in": "query",
+            "description": "Filter by attendee ID",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of registrations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create registration",
+        "description": "Register an attendee for a conference",
+        "tags": [
+          "Registrations"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRegistrationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Registration created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registrations/{id}": {
+      "get": {
+        "summary": "Get registration by ID",
+        "description": "Retrieve a specific registration by its ID",
+        "tags": [
+          "Registrations"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Registration ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Registration details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Registration not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Cancel registration",
+        "description": "Cancel a conference registration",
+        "tags": [
+          "Registrations"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Registration ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Registration cancelled successfully"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Registration not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/checkins": {
+      "get": {
+        "summary": "List check-ins",
+        "description": "Get paginated list of check-ins",
+        "tags": [
+          "Check-ins"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of items per page",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "registrationId",
+            "in": "query",
+            "description": "Filter by registration ID",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of check-ins",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckinListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create check-in",
+        "description": "Check in an attendee for a conference",
+        "tags": [
+          "Check-ins"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCheckinRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Check-in created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckinResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/overview": {
+      "get": {
+        "summary": "Get analytics overview",
+        "description": "Get overall analytics data for the system",
+        "tags": [
+          "Analytics"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Analytics overview data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalyticsOverviewResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/conferences/{id}/attendance": {
+      "get": {
+        "summary": "Get conference attendance analytics",
+        "description": "Get attendance analytics for a specific conference",
+        "tags": [
+          "Analytics"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Conference ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Conference attendance analytics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConferenceAttendanceResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conference not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/sessions/{id}/engagement": {
+      "get": {
+        "summary": "Get session engagement analytics",
+        "description": "Get engagement analytics for a specific session",
+        "tags": [
+          "Analytics"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Session ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Session engagement analytics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionEngagementResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Session not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/networking": {
+      "get": {
+        "summary": "Get networking analytics",
+        "description": "Get networking and matching analytics",
+        "tags": [
+          "Analytics"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Networking analytics data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkingAnalyticsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/badges/{attendeeId}": {
+      "get": {
+        "summary": "Get attendee badges",
+        "description": "Get badges and achievements for a specific attendee",
+        "tags": [
+          "Badges"
+        ],
+        "parameters": [
+          {
+            "name": "attendeeId",
+            "in": "path",
+            "description": "Attendee ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Attendee badges and statistics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BadgeResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Attendee not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/certificates/generate": {
+      "post": {
+        "summary": "Generate certificate",
+        "description": "Generate a certificate for an attendee",
+        "tags": [
+          "Certificates"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateCertificateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Certificate generated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CertificateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/messages": {
+      "get": {
+        "summary": "List messages",
+        "description": "Get paginated list of messages",
+        "tags": [
+          "Messages"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of items per page",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "sessionId",
+            "in": "query",
+            "description": "Filter by session ID",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of messages",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Send message",
+        "description": "Send a message to a session",
+        "tags": [
+          "Messages"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendMessageRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Message sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/matches": {
+      "get": {
+        "summary": "List matches",
+        "description": "Get paginated list of networking matches",
+        "tags": [
+          "Networking"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of items per page",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "attendeeId",
+            "in": "query",
+            "description": "Filter by attendee ID",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of matches",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatchListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create match",
+        "description": "Create a networking match between attendees",
+        "tags": [
+          "Networking"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMatchRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Match created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/profile": {
+      "get": {
+        "summary": "Get user profile",
+        "description": "Get current user's profile information",
+        "tags": [
+          "Profile"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User profile data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update user profile",
+        "description": "Update current user's profile information",
+        "tags": [
+          "Profile"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profile updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings": {
+      "get": {
+        "summary": "Get system settings",
+        "description": "Get current system settings",
+        "tags": [
+          "Settings"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "System settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update system settings",
+        "description": "Update system settings",
+        "tags": [
+          "Settings"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSettingsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Settings updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "summary": "List users",
+        "description": "Get paginated list of users",
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of items per page",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Search term for user name or email",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "summary": "Get user by ID",
+        "description": "Retrieve a specific user by their ID",
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "User ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update user",
+        "description": "Update an existing user",
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "User ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/roles": {
+      "get": {
+        "summary": "List roles",
+        "description": "Get paginated list of roles",
+        "tags": [
+          "Roles"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of items per page",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of roles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create role",
+        "description": "Create a new role",
+        "tags": [
+          "Roles"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRoleRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Role created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/permissions": {
+      "get": {
+        "summary": "List permissions",
+        "description": "Get paginated list of permissions",
+        "tags": [
+          "Permissions"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of items per page",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create permission",
+        "description": "Create a new permission",
+        "tags": [
+          "Permissions"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePermissionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Permission created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/audit": {
+      "get": {
+        "summary": "List audit logs",
+        "description": "Get paginated list of audit logs",
+        "tags": [
+          "Audit"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of items per page",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "description": "Filter by user ID",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "description": "Filter by action type",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of audit logs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditLogListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
             "content": {
               "application/json": {
                 "schema": {
@@ -647,7 +3076,13 @@
           },
           "STATUS": {
             "type": "string",
-            "enum": ["draft", "published", "active", "completed", "cancelled"],
+            "enum": [
+              "draft",
+              "published",
+              "active",
+              "completed",
+              "cancelled"
+            ],
             "description": "Current status of the conference"
           },
           "CREATED_AT": {
@@ -656,7 +3091,9 @@
             "description": "Creation timestamp"
           }
         },
-        "required": ["NAME"]
+        "required": [
+          "NAME"
+        ]
       },
       "CreateConferenceRequest": {
         "type": "object",
@@ -702,11 +3139,19 @@
           },
           "STATUS": {
             "type": "string",
-            "enum": ["draft", "published", "active", "completed", "cancelled"],
+            "enum": [
+              "draft",
+              "published",
+              "active",
+              "completed",
+              "cancelled"
+            ],
             "description": "Current status of the conference"
           }
         },
-        "required": ["NAME"]
+        "required": [
+          "NAME"
+        ]
       },
       "UpdateConferenceRequest": {
         "type": "object",
@@ -752,7 +3197,13 @@
           },
           "STATUS": {
             "type": "string",
-            "enum": ["draft", "published", "active", "completed", "cancelled"],
+            "enum": [
+              "draft",
+              "published",
+              "active",
+              "completed",
+              "cancelled"
+            ],
             "description": "Current status of the conference"
           }
         }
@@ -762,11 +3213,19 @@
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["draft", "published", "active", "completed", "cancelled"],
+            "enum": [
+              "draft",
+              "published",
+              "active",
+              "completed",
+              "cancelled"
+            ],
             "description": "New status for the conference"
           }
         },
-        "required": ["status"]
+        "required": [
+          "status"
+        ]
       },
       "ConferenceResponse": {
         "type": "object",
@@ -822,7 +3281,10 @@
             "minLength": 6
           }
         },
-        "required": ["email", "password"]
+        "required": [
+          "email",
+          "password"
+        ]
       },
       "LoginResponse": {
         "type": "object",
@@ -874,7 +3336,86 @@
             "description": "JWT refresh token"
           }
         },
-        "required": ["refreshToken"]
+        "required": [
+          "refreshToken"
+        ]
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "User full name",
+            "minLength": 2,
+            "maxLength": 100
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "User email address"
+          },
+          "password": {
+            "type": "string",
+            "description": "User password",
+            "minLength": 6,
+            "maxLength": 50
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "password"
+        ]
+      },
+      "RegisterResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "description": "User ID"
+              },
+              "message": {
+                "type": "string",
+                "description": "Success message"
+              }
+            }
+          }
+        }
+      },
+      "ForgotPasswordRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "User email address"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "ResetPasswordRequest": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Password reset token"
+          },
+          "password": {
+            "type": "string",
+            "description": "New password",
+            "minLength": 6,
+            "maxLength": 50
+          }
+        },
+        "required": [
+          "token",
+          "password"
+        ]
       },
       "ErrorResponse": {
         "type": "object",
@@ -885,7 +3426,13 @@
               "code": {
                 "type": "string",
                 "description": "Error code",
-                "examples": ["VALIDATION_ERROR", "UNAUTHORIZED", "FORBIDDEN", "NOT_FOUND", "INTERNAL_ERROR"]
+                "examples": [
+                  "VALIDATION_ERROR",
+                  "UNAUTHORIZED",
+                  "FORBIDDEN",
+                  "NOT_FOUND",
+                  "INTERNAL_ERROR"
+                ]
               },
               "message": {
                 "type": "string",
@@ -909,7 +3456,1412 @@
                 "description": "Detailed error information"
               }
             },
-            "required": ["code", "message"]
+            "required": [
+              "code",
+              "message"
+            ]
+          }
+        }
+      },
+      "Session": {
+        "type": "object",
+        "properties": {
+          "ID": {
+            "type": "integer",
+            "description": "Unique identifier for the session"
+          },
+          "CONFERENCE_ID": {
+            "type": "integer",
+            "description": "ID of the conference this session belongs to"
+          },
+          "TITLE": {
+            "type": "string",
+            "description": "Title of the session",
+            "maxLength": 255
+          },
+          "DESCRIPTION": {
+            "type": "string",
+            "description": "Description of the session",
+            "maxLength": 1000
+          },
+          "START_TIME": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Start time of the session"
+          },
+          "END_TIME": {
+            "type": "string",
+            "format": "date-time",
+            "description": "End time of the session"
+          },
+          "SPEAKER": {
+            "type": "string",
+            "description": "Name of the speaker",
+            "maxLength": 255
+          },
+          "ROOM": {
+            "type": "string",
+            "description": "Room where the session takes place",
+            "maxLength": 100
+          },
+          "CAPACITY": {
+            "type": "integer",
+            "description": "Maximum capacity of the session"
+          }
+        },
+        "required": [
+          "CONFERENCE_ID",
+          "TITLE",
+          "START_TIME",
+          "END_TIME"
+        ]
+      },
+      "CreateSessionRequest": {
+        "type": "object",
+        "properties": {
+          "CONFERENCE_ID": {
+            "type": "integer",
+            "description": "ID of the conference this session belongs to"
+          },
+          "TITLE": {
+            "type": "string",
+            "description": "Title of the session",
+            "maxLength": 255
+          },
+          "DESCRIPTION": {
+            "type": "string",
+            "description": "Description of the session",
+            "maxLength": 1000
+          },
+          "START_TIME": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Start time of the session"
+          },
+          "END_TIME": {
+            "type": "string",
+            "format": "date-time",
+            "description": "End time of the session"
+          },
+          "SPEAKER": {
+            "type": "string",
+            "description": "Name of the speaker",
+            "maxLength": 255
+          },
+          "ROOM": {
+            "type": "string",
+            "description": "Room where the session takes place",
+            "maxLength": 100
+          },
+          "CAPACITY": {
+            "type": "integer",
+            "description": "Maximum capacity of the session"
+          }
+        },
+        "required": [
+          "CONFERENCE_ID",
+          "TITLE",
+          "START_TIME",
+          "END_TIME"
+        ]
+      },
+      "UpdateSessionRequest": {
+        "type": "object",
+        "properties": {
+          "TITLE": {
+            "type": "string",
+            "description": "Title of the session",
+            "maxLength": 255
+          },
+          "DESCRIPTION": {
+            "type": "string",
+            "description": "Description of the session",
+            "maxLength": 1000
+          },
+          "START_TIME": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Start time of the session"
+          },
+          "END_TIME": {
+            "type": "string",
+            "format": "date-time",
+            "description": "End time of the session"
+          },
+          "SPEAKER": {
+            "type": "string",
+            "description": "Name of the speaker",
+            "maxLength": 255
+          },
+          "ROOM": {
+            "type": "string",
+            "description": "Room where the session takes place",
+            "maxLength": 100
+          },
+          "CAPACITY": {
+            "type": "integer",
+            "description": "Maximum capacity of the session"
+          }
+        }
+      },
+      "SessionResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Session"
+          }
+        }
+      },
+      "SessionListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Session"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "page": {
+                "type": "integer",
+                "description": "Current page number"
+              },
+              "limit": {
+                "type": "integer",
+                "description": "Items per page"
+              },
+              "total": {
+                "type": "integer",
+                "description": "Total number of items"
+              },
+              "totalPages": {
+                "type": "integer",
+                "description": "Total number of pages"
+              }
+            }
+          }
+        }
+      },
+      "Attendee": {
+        "type": "object",
+        "properties": {
+          "ID": {
+            "type": "integer",
+            "description": "Unique identifier for the attendee"
+          },
+          "NAME": {
+            "type": "string",
+            "description": "Full name of the attendee",
+            "maxLength": 255
+          },
+          "EMAIL": {
+            "type": "string",
+            "format": "email",
+            "description": "Email address of the attendee"
+          },
+          "PHONE": {
+            "type": "string",
+            "description": "Phone number of the attendee",
+            "maxLength": 20
+          },
+          "COMPANY": {
+            "type": "string",
+            "description": "Company name",
+            "maxLength": 255
+          },
+          "POSITION": {
+            "type": "string",
+            "description": "Job position",
+            "maxLength": 255
+          },
+          "AVATAR_URL": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to attendee's avatar image"
+          },
+          "DIETARY": {
+            "type": "string",
+            "description": "Dietary requirements",
+            "maxLength": 500
+          },
+          "SPECIAL_NEEDS": {
+            "type": "string",
+            "description": "Special needs or accessibility requirements",
+            "maxLength": 500
+          },
+          "DATE_OF_BIRTH": {
+            "type": "string",
+            "format": "date",
+            "description": "Date of birth"
+          },
+          "GENDER": {
+            "type": "string",
+            "enum": [
+              "male",
+              "female",
+              "other",
+              "prefer_not_to_say"
+            ],
+            "description": "Gender"
+          },
+          "CREATED_AT": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          }
+        },
+        "required": [
+          "NAME",
+          "EMAIL"
+        ]
+      },
+      "CreateAttendeeRequest": {
+        "type": "object",
+        "properties": {
+          "NAME": {
+            "type": "string",
+            "description": "Full name of the attendee",
+            "maxLength": 255
+          },
+          "EMAIL": {
+            "type": "string",
+            "format": "email",
+            "description": "Email address of the attendee"
+          },
+          "PHONE": {
+            "type": "string",
+            "description": "Phone number of the attendee",
+            "maxLength": 20
+          },
+          "COMPANY": {
+            "type": "string",
+            "description": "Company name",
+            "maxLength": 255
+          },
+          "POSITION": {
+            "type": "string",
+            "description": "Job position",
+            "maxLength": 255
+          },
+          "AVATAR_URL": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to attendee's avatar image"
+          },
+          "DIETARY": {
+            "type": "string",
+            "description": "Dietary requirements",
+            "maxLength": 500
+          },
+          "SPECIAL_NEEDS": {
+            "type": "string",
+            "description": "Special needs or accessibility requirements",
+            "maxLength": 500
+          },
+          "DATE_OF_BIRTH": {
+            "type": "string",
+            "format": "date",
+            "description": "Date of birth"
+          },
+          "GENDER": {
+            "type": "string",
+            "enum": [
+              "male",
+              "female",
+              "other",
+              "prefer_not_to_say"
+            ],
+            "description": "Gender"
+          }
+        },
+        "required": [
+          "NAME",
+          "EMAIL"
+        ]
+      },
+      "UpdateAttendeeRequest": {
+        "type": "object",
+        "properties": {
+          "NAME": {
+            "type": "string",
+            "description": "Full name of the attendee",
+            "maxLength": 255
+          },
+          "EMAIL": {
+            "type": "string",
+            "format": "email",
+            "description": "Email address of the attendee"
+          },
+          "PHONE": {
+            "type": "string",
+            "description": "Phone number of the attendee",
+            "maxLength": 20
+          },
+          "COMPANY": {
+            "type": "string",
+            "description": "Company name",
+            "maxLength": 255
+          },
+          "POSITION": {
+            "type": "string",
+            "description": "Job position",
+            "maxLength": 255
+          },
+          "AVATAR_URL": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to attendee's avatar image"
+          },
+          "DIETARY": {
+            "type": "string",
+            "description": "Dietary requirements",
+            "maxLength": 500
+          },
+          "SPECIAL_NEEDS": {
+            "type": "string",
+            "description": "Special needs or accessibility requirements",
+            "maxLength": 500
+          },
+          "DATE_OF_BIRTH": {
+            "type": "string",
+            "format": "date",
+            "description": "Date of birth"
+          },
+          "GENDER": {
+            "type": "string",
+            "enum": [
+              "male",
+              "female",
+              "other",
+              "prefer_not_to_say"
+            ],
+            "description": "Gender"
+          }
+        }
+      },
+      "AttendeeResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Attendee"
+          }
+        }
+      },
+      "AttendeeListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Attendee"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "page": {
+                "type": "integer",
+                "description": "Current page number"
+              },
+              "limit": {
+                "type": "integer",
+                "description": "Items per page"
+              },
+              "total": {
+                "type": "integer",
+                "description": "Total number of items"
+              },
+              "totalPages": {
+                "type": "integer",
+                "description": "Total number of pages"
+              }
+            }
+          }
+        }
+      },
+      "Registration": {
+        "type": "object",
+        "properties": {
+          "ID": {
+            "type": "integer",
+            "description": "Unique identifier for the registration"
+          },
+          "CONFERENCE_ID": {
+            "type": "integer",
+            "description": "ID of the conference"
+          },
+          "ATTENDEE_ID": {
+            "type": "integer",
+            "description": "ID of the attendee"
+          },
+          "STATUS": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "confirmed",
+              "cancelled",
+              "checked-in"
+            ],
+            "description": "Registration status"
+          },
+          "REGISTRATION_DATE": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date of registration"
+          },
+          "QR_CODE": {
+            "type": "string",
+            "description": "QR code for check-in"
+          }
+        },
+        "required": [
+          "CONFERENCE_ID",
+          "ATTENDEE_ID"
+        ]
+      },
+      "CreateRegistrationRequest": {
+        "type": "object",
+        "properties": {
+          "CONFERENCE_ID": {
+            "type": "integer",
+            "description": "ID of the conference"
+          },
+          "ATTENDEE_ID": {
+            "type": "integer",
+            "description": "ID of the attendee"
+          }
+        },
+        "required": [
+          "CONFERENCE_ID",
+          "ATTENDEE_ID"
+        ]
+      },
+      "RegistrationResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Registration"
+          }
+        }
+      },
+      "RegistrationListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Registration"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "page": {
+                "type": "integer",
+                "description": "Current page number"
+              },
+              "limit": {
+                "type": "integer",
+                "description": "Items per page"
+              },
+              "total": {
+                "type": "integer",
+                "description": "Total number of items"
+              },
+              "totalPages": {
+                "type": "integer",
+                "description": "Total number of pages"
+              }
+            }
+          }
+        }
+      },
+      "Checkin": {
+        "type": "object",
+        "properties": {
+          "ID": {
+            "type": "integer",
+            "description": "Unique identifier for the check-in"
+          },
+          "REGISTRATION_ID": {
+            "type": "integer",
+            "description": "ID of the registration"
+          },
+          "STATUS": {
+            "type": "string",
+            "enum": [
+              "checked-in",
+              "checked-out"
+            ],
+            "description": "Check-in status"
+          },
+          "CHECKIN_TIME": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Time of check-in"
+          }
+        },
+        "required": [
+          "REGISTRATION_ID",
+          "STATUS"
+        ]
+      },
+      "CreateCheckinRequest": {
+        "type": "object",
+        "properties": {
+          "REGISTRATION_ID": {
+            "type": "integer",
+            "description": "ID of the registration"
+          },
+          "STATUS": {
+            "type": "string",
+            "enum": [
+              "checked-in",
+              "checked-out"
+            ],
+            "description": "Check-in status"
+          }
+        },
+        "required": [
+          "REGISTRATION_ID",
+          "STATUS"
+        ]
+      },
+      "CheckinResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Checkin"
+          }
+        }
+      },
+      "CheckinListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Checkin"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "page": {
+                "type": "integer",
+                "description": "Current page number"
+              },
+              "limit": {
+                "type": "integer",
+                "description": "Items per page"
+              },
+              "total": {
+                "type": "integer",
+                "description": "Total number of items"
+              },
+              "totalPages": {
+                "type": "integer",
+                "description": "Total number of pages"
+              }
+            }
+          }
+        }
+      },
+      "AnalyticsOverviewResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "attendees": {
+                "type": "integer",
+                "description": "Total number of attendees"
+              },
+              "registrations": {
+                "type": "integer",
+                "description": "Total number of registrations"
+              },
+              "checkins": {
+                "type": "integer",
+                "description": "Total number of check-ins"
+              }
+            }
+          }
+        }
+      },
+      "ConferenceAttendanceResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer",
+                "description": "Total registrations"
+              },
+              "checked": {
+                "type": "integer",
+                "description": "Number of check-ins"
+              }
+            }
+          }
+        }
+      },
+      "SessionEngagementResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "messages": {
+                "type": "integer",
+                "description": "Number of messages in session"
+              }
+            }
+          }
+        }
+      },
+      "NetworkingAnalyticsResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "matches": {
+                "type": "integer",
+                "description": "Total number of matches"
+              },
+              "messages": {
+                "type": "integer",
+                "description": "Total number of messages"
+              }
+            }
+          }
+        }
+      },
+      "BadgeResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "badges": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "List of earned badges"
+              },
+              "stats": {
+                "type": "object",
+                "properties": {
+                  "messages": {
+                    "type": "integer",
+                    "description": "Number of messages sent"
+                  },
+                  "checkins": {
+                    "type": "integer",
+                    "description": "Number of check-ins"
+                  },
+                  "sessionsSpoken": {
+                    "type": "integer",
+                    "description": "Number of sessions spoken"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "GenerateCertificateRequest": {
+        "type": "object",
+        "properties": {
+          "ATTENDEE_ID": {
+            "type": "integer",
+            "description": "ID of the attendee"
+          },
+          "CONFERENCE_ID": {
+            "type": "integer",
+            "description": "ID of the conference"
+          }
+        },
+        "required": [
+          "ATTENDEE_ID",
+          "CONFERENCE_ID"
+        ]
+      },
+      "CertificateResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "certificateUrl": {
+                "type": "string",
+                "format": "uri",
+                "description": "URL to the generated certificate"
+              },
+              "message": {
+                "type": "string",
+                "description": "Success message"
+              }
+            }
+          }
+        }
+      },
+      "Message": {
+        "type": "object",
+        "properties": {
+          "ID": {
+            "type": "integer",
+            "description": "Unique identifier for the message"
+          },
+          "SESSION_ID": {
+            "type": "integer",
+            "description": "ID of the session"
+          },
+          "ATTENDEE_ID": {
+            "type": "integer",
+            "description": "ID of the attendee who sent the message"
+          },
+          "TYPE": {
+            "type": "string",
+            "enum": [
+              "text",
+              "question",
+              "answer"
+            ],
+            "description": "Type of message"
+          },
+          "CONTENT": {
+            "type": "string",
+            "description": "Message content",
+            "maxLength": 1000
+          },
+          "CREATED_AT": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          }
+        },
+        "required": [
+          "SESSION_ID",
+          "ATTENDEE_ID",
+          "TYPE",
+          "CONTENT"
+        ]
+      },
+      "SendMessageRequest": {
+        "type": "object",
+        "properties": {
+          "SESSION_ID": {
+            "type": "integer",
+            "description": "ID of the session"
+          },
+          "TYPE": {
+            "type": "string",
+            "enum": [
+              "text",
+              "question",
+              "answer"
+            ],
+            "description": "Type of message"
+          },
+          "CONTENT": {
+            "type": "string",
+            "description": "Message content",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "SESSION_ID",
+          "TYPE",
+          "CONTENT"
+        ]
+      },
+      "MessageResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Message"
+          }
+        }
+      },
+      "MessageListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Message"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "page": {
+                "type": "integer",
+                "description": "Current page number"
+              },
+              "limit": {
+                "type": "integer",
+                "description": "Items per page"
+              },
+              "total": {
+                "type": "integer",
+                "description": "Total number of items"
+              },
+              "totalPages": {
+                "type": "integer",
+                "description": "Total number of pages"
+              }
+            }
+          }
+        }
+      },
+      "Match": {
+        "type": "object",
+        "properties": {
+          "ID": {
+            "type": "integer",
+            "description": "Unique identifier for the match"
+          },
+          "ATTENDEE_A": {
+            "type": "integer",
+            "description": "ID of first attendee"
+          },
+          "ATTENDEE_B": {
+            "type": "integer",
+            "description": "ID of second attendee"
+          },
+          "SCORE": {
+            "type": "number",
+            "description": "Match compatibility score"
+          },
+          "CREATED_AT": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          }
+        },
+        "required": [
+          "ATTENDEE_A",
+          "ATTENDEE_B"
+        ]
+      },
+      "CreateMatchRequest": {
+        "type": "object",
+        "properties": {
+          "ATTENDEE_A": {
+            "type": "integer",
+            "description": "ID of first attendee"
+          },
+          "ATTENDEE_B": {
+            "type": "integer",
+            "description": "ID of second attendee"
+          },
+          "SCORE": {
+            "type": "number",
+            "description": "Match compatibility score"
+          }
+        },
+        "required": [
+          "ATTENDEE_A",
+          "ATTENDEE_B"
+        ]
+      },
+      "MatchResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Match"
+          }
+        }
+      },
+      "MatchListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Match"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "page": {
+                "type": "integer",
+                "description": "Current page number"
+              },
+              "limit": {
+                "type": "integer",
+                "description": "Items per page"
+              },
+              "total": {
+                "type": "integer",
+                "description": "Total number of items"
+              },
+              "totalPages": {
+                "type": "integer",
+                "description": "Total number of pages"
+              }
+            }
+          }
+        }
+      },
+      "ProfileResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "user": {
+                "$ref": "#/components/schemas/User"
+              },
+              "attendee": {
+                "$ref": "#/components/schemas/Attendee"
+              }
+            }
+          }
+        }
+      },
+      "UpdateProfileRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "User full name",
+            "maxLength": 100
+          },
+          "phone": {
+            "type": "string",
+            "description": "Phone number",
+            "maxLength": 20
+          },
+          "company": {
+            "type": "string",
+            "description": "Company name",
+            "maxLength": 255
+          },
+          "position": {
+            "type": "string",
+            "description": "Job position",
+            "maxLength": 255
+          },
+          "avatarUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "Avatar image URL"
+          },
+          "dietary": {
+            "type": "string",
+            "description": "Dietary requirements",
+            "maxLength": 500
+          },
+          "specialNeeds": {
+            "type": "string",
+            "description": "Special needs",
+            "maxLength": 500
+          },
+          "dateOfBirth": {
+            "type": "string",
+            "format": "date",
+            "description": "Date of birth"
+          },
+          "gender": {
+            "type": "string",
+            "enum": [
+              "male",
+              "female",
+              "other",
+              "prefer_not_to_say"
+            ],
+            "description": "Gender"
+          }
+        }
+      },
+      "SettingsResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "description": "System settings object"
+          }
+        }
+      },
+      "UpdateSettingsRequest": {
+        "type": "object",
+        "properties": {
+          "settings": {
+            "type": "object",
+            "description": "Settings to update"
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "ID": {
+            "type": "integer",
+            "description": "Unique identifier for the user"
+          },
+          "EMAIL": {
+            "type": "string",
+            "format": "email",
+            "description": "User email address"
+          },
+          "NAME": {
+            "type": "string",
+            "description": "User full name",
+            "maxLength": 100
+          },
+          "STATUS": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive",
+              "suspended"
+            ],
+            "description": "User status"
+          },
+          "CREATED_AT": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          }
+        },
+        "required": [
+          "EMAIL",
+          "NAME"
+        ]
+      },
+      "UpdateUserRequest": {
+        "type": "object",
+        "properties": {
+          "NAME": {
+            "type": "string",
+            "description": "User full name",
+            "maxLength": 100
+          },
+          "STATUS": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive",
+              "suspended"
+            ],
+            "description": "User status"
+          }
+        }
+      },
+      "UserResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/User"
+          }
+        }
+      },
+      "UserListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/User"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "page": {
+                "type": "integer",
+                "description": "Current page number"
+              },
+              "limit": {
+                "type": "integer",
+                "description": "Items per page"
+              },
+              "total": {
+                "type": "integer",
+                "description": "Total number of items"
+              },
+              "totalPages": {
+                "type": "integer",
+                "description": "Total number of pages"
+              }
+            }
+          }
+        }
+      },
+      "Role": {
+        "type": "object",
+        "properties": {
+          "ID": {
+            "type": "integer",
+            "description": "Unique identifier for the role"
+          },
+          "CODE": {
+            "type": "string",
+            "description": "Role code",
+            "maxLength": 50
+          },
+          "NAME": {
+            "type": "string",
+            "description": "Role name",
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "CODE",
+          "NAME"
+        ]
+      },
+      "CreateRoleRequest": {
+        "type": "object",
+        "properties": {
+          "CODE": {
+            "type": "string",
+            "description": "Role code",
+            "maxLength": 50
+          },
+          "NAME": {
+            "type": "string",
+            "description": "Role name",
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "CODE",
+          "NAME"
+        ]
+      },
+      "RoleResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Role"
+          }
+        }
+      },
+      "RoleListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Role"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "page": {
+                "type": "integer",
+                "description": "Current page number"
+              },
+              "limit": {
+                "type": "integer",
+                "description": "Items per page"
+              },
+              "total": {
+                "type": "integer",
+                "description": "Total number of items"
+              },
+              "totalPages": {
+                "type": "integer",
+                "description": "Total number of pages"
+              }
+            }
+          }
+        }
+      },
+      "Permission": {
+        "type": "object",
+        "properties": {
+          "ID": {
+            "type": "integer",
+            "description": "Unique identifier for the permission"
+          },
+          "CODE": {
+            "type": "string",
+            "description": "Permission code",
+            "maxLength": 50
+          },
+          "NAME": {
+            "type": "string",
+            "description": "Permission name",
+            "maxLength": 100
+          },
+          "CATEGORY": {
+            "type": "string",
+            "description": "Permission category",
+            "maxLength": 50
+          },
+          "DESCRIPTION": {
+            "type": "string",
+            "description": "Permission description",
+            "maxLength": 255
+          }
+        },
+        "required": [
+          "CODE",
+          "NAME"
+        ]
+      },
+      "CreatePermissionRequest": {
+        "type": "object",
+        "properties": {
+          "CODE": {
+            "type": "string",
+            "description": "Permission code",
+            "maxLength": 50
+          },
+          "NAME": {
+            "type": "string",
+            "description": "Permission name",
+            "maxLength": 100
+          },
+          "CATEGORY": {
+            "type": "string",
+            "description": "Permission category",
+            "maxLength": 50
+          },
+          "DESCRIPTION": {
+            "type": "string",
+            "description": "Permission description",
+            "maxLength": 255
+          }
+        },
+        "required": [
+          "CODE",
+          "NAME"
+        ]
+      },
+      "PermissionResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Permission"
+          }
+        }
+      },
+      "PermissionListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Permission"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "page": {
+                "type": "integer",
+                "description": "Current page number"
+              },
+              "limit": {
+                "type": "integer",
+                "description": "Items per page"
+              },
+              "total": {
+                "type": "integer",
+                "description": "Total number of items"
+              },
+              "totalPages": {
+                "type": "integer",
+                "description": "Total number of pages"
+              }
+            }
+          }
+        }
+      },
+      "AuditLog": {
+        "type": "object",
+        "properties": {
+          "ID": {
+            "type": "integer",
+            "description": "Unique identifier for the audit log"
+          },
+          "USER_ID": {
+            "type": "integer",
+            "description": "ID of the user who performed the action"
+          },
+          "ACTION": {
+            "type": "string",
+            "description": "Action performed",
+            "maxLength": 100
+          },
+          "RESOURCE": {
+            "type": "string",
+            "description": "Resource affected",
+            "maxLength": 100
+          },
+          "RESOURCE_ID": {
+            "type": "integer",
+            "description": "ID of the affected resource"
+          },
+          "DETAILS": {
+            "type": "string",
+            "description": "Additional details",
+            "maxLength": 1000
+          },
+          "IP_ADDRESS": {
+            "type": "string",
+            "description": "IP address of the user",
+            "maxLength": 45
+          },
+          "USER_AGENT": {
+            "type": "string",
+            "description": "User agent string",
+            "maxLength": 500
+          },
+          "CREATED_AT": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          }
+        },
+        "required": [
+          "USER_ID",
+          "ACTION",
+          "RESOURCE"
+        ]
+      },
+      "AuditLogListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditLog"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "page": {
+                "type": "integer",
+                "description": "Current page number"
+              },
+              "limit": {
+                "type": "integer",
+                "description": "Items per page"
+              },
+              "total": {
+                "type": "integer",
+                "description": "Total number of items"
+              },
+              "totalPages": {
+                "type": "integer",
+                "description": "Total number of pages"
+              }
+            }
           }
         }
       }
@@ -921,5 +4873,3 @@
     }
   ]
 }
-
-

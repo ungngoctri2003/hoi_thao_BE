@@ -1,4 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express'
+import oracledb from 'oracledb';
 import { withConn } from '../../config/db';
 import { ok } from '../../utils/responses';
 
@@ -10,12 +11,12 @@ export async function getProfile(req: Request, res: Response, next: NextFunction
       const userRes = await conn.execute(
         `SELECT ID, EMAIL, NAME, STATUS, CREATED_AT, LAST_LOGIN FROM APP_USERS WHERE ID = :id`,
         { id: userId },
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       const attendeeRes = await conn.execute(
         `SELECT ID, NAME, EMAIL, COMPANY, POSITION, AVATAR_URL, GENDER FROM ATTENDEES WHERE EMAIL = :email`,
         { email },
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       return {
         user: ((userRes.rows as any[])[0]) || null,
@@ -39,13 +40,14 @@ export async function updateProfile(req: Request, res: Response, next: NextFunct
       const userRes = await conn.execute(
         `SELECT ID, EMAIL, NAME, STATUS, CREATED_AT, LAST_LOGIN FROM APP_USERS WHERE ID = :id`,
         { id: userId },
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       return (userRes.rows as any[])[0];
     });
     res.json(ok(result));
   } catch (e) { next(e); }
 }
+
 
 
 

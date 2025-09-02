@@ -1,4 +1,5 @@
 import { withConn } from '../../config/db';
+import oracledb from 'oracledb';
 
 export type AttendeeRow = {
   ID: number;
@@ -21,7 +22,7 @@ export const attendeesRepository = {
       const res = await conn.execute(
         `SELECT ID, NAME, EMAIL, PHONE, COMPANY, POSITION, AVATAR_URL, DIETARY, SPECIAL_NEEDS, DATE_OF_BIRTH, GENDER, CREATED_AT FROM ATTENDEES WHERE EMAIL = :email`,
         { email },
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       const rows = (res.rows as any[]) || [];
       return (rows[0] as AttendeeRow) || null;
@@ -51,15 +52,15 @@ export const attendeesRepository = {
            ) t WHERE ROWNUM <= :maxRow
          ) WHERE rn > :minRow`,
         { ...binds, maxRow: offset + limit, minRow: offset },
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       const countRes = await conn.execute(
         `SELECT COUNT(*) AS CNT FROM ATTENDEES WHERE ${where}`,
         binds,
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       const rows = (listRes.rows as any[]) || [];
-      const total = Number(((countRes.rows as any[])[0] as any).CNT);
+      const total = Number((countRes.rows as Array<{CNT: number}>)[0]?.CNT || 0);
       return { rows: rows as AttendeeRow[], total };
     });
   },
@@ -70,7 +71,7 @@ export const attendeesRepository = {
         `SELECT ID, NAME, EMAIL, PHONE, COMPANY, POSITION, AVATAR_URL, DIETARY, SPECIAL_NEEDS, DATE_OF_BIRTH, GENDER, CREATED_AT
          FROM ATTENDEES WHERE ID = :id`,
         { id },
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       const rows = (res.rows as any[]) || [];
       return (rows[0] as AttendeeRow) || null;
@@ -83,10 +84,11 @@ export const attendeesRepository = {
         `INSERT INTO ATTENDEES (NAME, EMAIL, PHONE, COMPANY, POSITION, AVATAR_URL, DIETARY, SPECIAL_NEEDS, DATE_OF_BIRTH, GENDER)
          VALUES (:NAME, :EMAIL, :PHONE, :COMPANY, :POSITION, :AVATAR_URL, :DIETARY, :SPECIAL_NEEDS, :DATE_OF_BIRTH, :GENDER)
          RETURNING ID INTO :ID`,
-        { ...data, ID: { dir: (require('oracledb') as any).BIND_OUT, type: (require('oracledb') as any).NUMBER } },
+        { ...data, ID: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER } },
         { autoCommit: true }
       );
-      const id = (res.outBinds as any).ID[0];
+      const id = (res.outBinds as { ID: number[] }).ID[0];
+      if (!id) throw new Error('Failed to get created ID');
       const created = await this.findById(id);
       return created as AttendeeRow;
     });
@@ -98,7 +100,7 @@ export const attendeesRepository = {
       const binds: any = { id };
       for (const key of Object.keys(data)) {
         fields.push(`${key} = :${key}`);
-        (binds as any)[key] = (data as any)[key];
+        (binds as Record<string, any>)[key] = (data as Record<string, any>)[key];
       }
       if (fields.length === 0) return this.findById(id);
       await conn.execute(
@@ -122,7 +124,7 @@ export const attendeesRepository = {
         `SELECT r.ID, r.CONFERENCE_ID, r.STATUS, r.QR_CODE, r.REGISTRATION_DATE
          FROM REGISTRATIONS r WHERE r.ATTENDEE_ID = :attendeeId ORDER BY r.REGISTRATION_DATE DESC`,
         { attendeeId },
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       return (res.rows as any[]) || [];
     });
@@ -135,7 +137,7 @@ export const attendeesRepository = {
          WHERE LOWER(NAME) LIKE :q OR LOWER(EMAIL) LIKE :q OR LOWER(COMPANY) LIKE :q
          ORDER BY CREATED_AT DESC FETCH FIRST :limit ROWS ONLY`,
         { q: `%${q.toLowerCase()}%`, limit },
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       return (res.rows as any[]) || [];
     });

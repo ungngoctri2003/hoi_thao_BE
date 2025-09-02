@@ -1,4 +1,5 @@
-import { withConn, withTransaction } from '../../config/db';
+import { withConn, withTransaction } from '../../config/db'
+import oracledb from 'oracledb';
 import { generateRegistrationQr } from '../../utils/qr';
 
 export type RegistrationRow = {
@@ -27,15 +28,15 @@ export const registrationsRepository = {
            ) t WHERE ROWNUM <= :maxRow
          ) WHERE rn > :minRow`,
         { ...binds, maxRow: offset + limit, minRow: offset },
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       const countRes = await conn.execute(
         `SELECT COUNT(*) AS CNT FROM REGISTRATIONS WHERE ${where}`,
         binds,
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       const rows = (listRes.rows as any[]) || [];
-      const total = Number(((countRes.rows as any[])[0] as any).CNT);
+      const total = Number((countRes.rows as Array<{CNT: number}>)[0]?.CNT || 0);
       return { rows: rows as RegistrationRow[], total };
     });
   },
@@ -45,7 +46,7 @@ export const registrationsRepository = {
       const res = await conn.execute(
         `SELECT ID, ATTENDEE_ID, CONFERENCE_ID, REGISTRATION_DATE, STATUS, QR_CODE FROM REGISTRATIONS WHERE ID = :id`,
         { id },
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       const rows = (res.rows as any[]) || [];
       return (rows[0] as RegistrationRow) || null;
@@ -62,13 +63,13 @@ export const registrationsRepository = {
             `INSERT INTO REGISTRATIONS (ATTENDEE_ID, CONFERENCE_ID, STATUS, QR_CODE)
              VALUES (:ATTENDEE_ID, :CONFERENCE_ID, 'registered', :QR_CODE)
              RETURNING ID INTO :ID`,
-            { ...data, QR_CODE: qr, ID: { dir: (require('oracledb') as any).BIND_OUT, type: (require('oracledb') as any).NUMBER } }
+            { ...data, QR_CODE: qr, ID: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER } }
           );
-          const id = (res.outBinds as any).ID[0];
+          const id = (res.outBinds as { ID: number[] }).ID[0];
           const created = await conn.execute(
             `SELECT ID, ATTENDEE_ID, CONFERENCE_ID, REGISTRATION_DATE, STATUS, QR_CODE FROM REGISTRATIONS WHERE ID = :id`,
             { id },
-            { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+            { outFormat: oracledb.OUT_FORMAT_OBJECT }
           );
           return ((created.rows as any[])[0]) as RegistrationRow;
         } catch (e: any) {
@@ -87,7 +88,7 @@ export const registrationsRepository = {
       const res = await conn.execute(
         `SELECT ID, ATTENDEE_ID, CONFERENCE_ID, REGISTRATION_DATE, STATUS, QR_CODE FROM REGISTRATIONS WHERE ID = :id`,
         { id },
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       const rows = (res.rows as any[]) || [];
       return (rows[0] as RegistrationRow) || null;
@@ -105,13 +106,14 @@ export const registrationsRepository = {
       const res = await conn.execute(
         `SELECT ID, ATTENDEE_ID, CONFERENCE_ID, REGISTRATION_DATE, STATUS, QR_CODE FROM REGISTRATIONS WHERE QR_CODE = :qr`,
         { qr },
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       const rows = (res.rows as any[]) || [];
       return (rows[0] as RegistrationRow) || null;
     });
   }
 };
+
 
 
 

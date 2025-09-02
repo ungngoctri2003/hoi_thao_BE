@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { usersRepository } from '../modules/users/users.repository';
+import { logger } from '../app';
 
 export type AuthUser = {
   id: number;
@@ -18,36 +19,39 @@ declare global {
 }
 
 export function auth() {
-  return async (req: Request, res: Response, next: NextFunction) => {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const header = req.headers.authorization;
       if (!header || !header.startsWith('Bearer ')) {
-        return res.status(401).json({ 
+        res.status(401).json({ 
           error: { 
             code: 'UNAUTHORIZED', 
             message: 'Missing or invalid authorization header. Use format: Bearer <token>' 
           } 
         });
+        return;
       }
       
       const token = header.slice('Bearer '.length);
       if (!token) {
-        return res.status(401).json({ 
+        res.status(401).json({ 
           error: { 
             code: 'UNAUTHORIZED', 
             message: 'Token is required' 
           } 
         });
+        return;
       }
 
       const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET!) as AuthUser;
       if (!decoded || !decoded.id || !decoded.email) {
-        return res.status(401).json({ 
+        res.status(401).json({ 
           error: { 
             code: 'UNAUTHORIZED', 
             message: 'Invalid token format' 
           } 
         });
+        return;
       }
 
       const perms = await usersRepository.getPermissions(decoded.id);
@@ -55,25 +59,27 @@ export function auth() {
       next();
     } catch (error) {
       if (error instanceof jwt.JsonWebTokenError) {
-        return res.status(401).json({ 
+        res.status(401).json({ 
           error: { 
             code: 'UNAUTHORIZED', 
             message: 'Invalid or expired token' 
           } 
         });
+        return;
       }
       
       if (error instanceof jwt.TokenExpiredError) {
-        return res.status(401).json({ 
+        res.status(401).json({ 
           error: { 
             code: 'TOKEN_EXPIRED', 
             message: 'Token has expired' 
           } 
         });
+        return;
       }
 
-      console.error('Auth middleware error:', error);
-      return res.status(500).json({ 
+      logger.error({ error }, 'Auth middleware error');
+      res.status(500).json({ 
         error: { 
           code: 'INTERNAL_ERROR', 
           message: 'Authentication service error' 

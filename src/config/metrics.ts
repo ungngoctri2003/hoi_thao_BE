@@ -1,5 +1,6 @@
 import express from 'express';
 import client from 'prom-client';
+import { logger } from '../app';
 
 export const httpRequestCounter = new client.Counter({
   name: 'http_requests_total',
@@ -35,7 +36,7 @@ metricsRouter.get('/', async (_req, res) => {
     const metrics = await client.register.metrics();
     res.end(metrics);
   } catch (error) {
-    console.error('Error generating metrics:', error);
+    logger.error({ error }, 'Error generating metrics');
     res.status(500).json({ error: 'Failed to generate metrics' });
   }
 });

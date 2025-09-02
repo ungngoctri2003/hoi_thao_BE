@@ -16,3 +16,4 @@ registrationsRouter.delete('/:id', auth(), rbac('registrations.write'), audit('c
 
 
 
+

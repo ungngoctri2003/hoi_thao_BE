@@ -1,4 +1,5 @@
 import { withConn } from '../../config/db';
+import oracledb from 'oracledb';
 
 export type SessionRow = {
   ID: number;
@@ -23,7 +24,7 @@ export const sessionsRepository = {
         `SELECT ID, CONFERENCE_ID, ROOM_ID, TITLE, SPEAKER, START_TIME, END_TIME, STATUS, DESCRIPTION
          FROM SESSIONS WHERE ${where} ORDER BY START_TIME NULLS LAST`,
         binds,
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       return (res.rows as any[]) as SessionRow[];
     });
@@ -34,7 +35,7 @@ export const sessionsRepository = {
       const res = await conn.execute(
         `SELECT ID, CONFERENCE_ID, ROOM_ID, TITLE, SPEAKER, START_TIME, END_TIME, STATUS, DESCRIPTION FROM SESSIONS WHERE ID = :id`,
         { id },
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       const rows = (res.rows as any[]) || [];
       return (rows[0] as SessionRow) || null;
@@ -55,11 +56,12 @@ export const sessionsRepository = {
           end: data.END_TIME || null,
           status: data.STATUS || 'upcoming',
           desc: data.DESCRIPTION || null,
-          ID: { dir: (require('oracledb') as any).BIND_OUT, type: (require('oracledb') as any).NUMBER }
+          ID: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER }
         },
         { autoCommit: true }
       );
-      const id = (res.outBinds as any).ID[0];
+      const id = (res.outBinds as { ID: number[] }).ID[0];
+      if (!id) throw new Error('Failed to get created ID');
       return this.findById(id);
     });
   },
@@ -67,7 +69,7 @@ export const sessionsRepository = {
   async update(id: number, data: Partial<Omit<SessionRow, 'ID' | 'CONFERENCE_ID'>>) {
     return withConn(async (conn) => {
       const fields: string[] = []; const binds: any = { id };
-      for (const key of Object.keys(data)) { fields.push(`${key} = :${key}`); binds[key] = (data as any)[key]; }
+      for (const key of Object.keys(data)) { fields.push(`${key} = :${key}`); binds[key] = (data as Record<string, any>)[key]; }
       if (fields.length === 0) return this.findById(id);
       await conn.execute(`UPDATE SESSIONS SET ${fields.join(', ')} WHERE ID = :id`, binds, { autoCommit: true });
       return this.findById(id);
@@ -87,6 +89,7 @@ export const sessionsRepository = {
     });
   }
 };
+
 
 
 

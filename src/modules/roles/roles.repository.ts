@@ -1,4 +1,5 @@
 import { withConn } from '../../config/db';
+import oracledb from 'oracledb';
 
 export const rolesRepository = {
   async list() {
@@ -6,7 +7,7 @@ export const rolesRepository = {
       const res = await conn.execute(
         `SELECT ID, CODE, NAME FROM ROLES ORDER BY ID`,
         {},
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       return (res.rows as any[]) || [];
     });
@@ -15,10 +16,10 @@ export const rolesRepository = {
     return withConn(async (conn) => {
       const res = await conn.execute(
         `INSERT INTO ROLES (CODE, NAME) VALUES (:code, :name) RETURNING ID INTO :ID`,
-        { code, name, ID: { dir: (require('oracledb') as any).BIND_OUT, type: (require('oracledb') as any).NUMBER } },
+        { code, name, ID: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER } },
         { autoCommit: true }
       );
-      return (res.outBinds as any).ID[0];
+      return (res.outBinds as { ID: number[] }).ID[0];
     });
   },
   async assignPermission(roleId: number, permId: number) {

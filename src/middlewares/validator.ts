@@ -1,8 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodSchema, ZodError } from 'zod';
+import { logger } from '../app';
 
-export function validate(schema: ZodSchema<any>) {
-  return (req: Request, res: Response, next: NextFunction) => {
+export function validate(schema: ZodSchema<unknown>) {
+  return (req: Request, res: Response, next: NextFunction): void => {
     try {
       const result = schema.safeParse({ 
         body: req.body, 
@@ -12,27 +13,28 @@ export function validate(schema: ZodSchema<any>) {
       
       if (!result.success) {
         const error = result.error as ZodError;
-        const formattedErrors = error.errors.map(err => ({
+        const formattedErrors = error.issues.map(err => ({
           field: err.path.join('.'),
           message: err.message,
           code: err.code
         }));
         
-        return res.status(400).json({ 
+        res.status(400).json({ 
           error: { 
             code: 'VALIDATION_ERROR', 
             message: 'Invalid input data', 
             details: formattedErrors 
           } 
         });
+        return;
       }
       
       // Attach validated data to request
       req.validatedData = result.data;
       next();
     } catch (error) {
-      console.error('Validation middleware error:', error);
-      return res.status(500).json({ 
+      logger.error({ error }, 'Validation middleware error');
+      res.status(500).json({ 
         error: { 
           code: 'VALIDATION_ERROR', 
           message: 'Validation service error' 
@@ -46,7 +48,7 @@ export function validate(schema: ZodSchema<any>) {
 declare global {
   namespace Express {
     interface Request {
-      validatedData?: any;
+      validatedData?: unknown;
     }
   }
 }

@@ -1,4 +1,5 @@
-import { withConn } from '../../config/db';
+import { withConn } from '../../config/db'
+import oracledb from 'oracledb';
 
 export const roomsRepository = {
   async list(floorId: number) {
@@ -6,7 +7,7 @@ export const roomsRepository = {
       const res = await conn.execute(
         `SELECT ID, FLOOR_ID, NAME, CAPACITY FROM ROOMS WHERE FLOOR_ID = :floor ORDER BY NAME`,
         { floor: floorId },
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       return (res.rows as any[]) || [];
     });
@@ -15,10 +16,10 @@ export const roomsRepository = {
     return withConn(async (conn) => {
       const res = await conn.execute(
         `INSERT INTO ROOMS (FLOOR_ID, NAME, CAPACITY) VALUES (:floor, :name, :cap) RETURNING ID INTO :ID`,
-        { floor: floorId, name, cap: capacity || null, ID: { dir: (require('oracledb') as any).BIND_OUT, type: (require('oracledb') as any).NUMBER } },
+        { floor: floorId, name, cap: capacity || null, ID: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER } },
         { autoCommit: true }
       );
-      return (res.outBinds as any).ID[0];
+      return (res.outBinds as { ID: number[] }).ID[0];
     });
   },
   async remove(id: number) {
@@ -27,6 +28,7 @@ export const roomsRepository = {
     });
   }
 };
+
 
 
 

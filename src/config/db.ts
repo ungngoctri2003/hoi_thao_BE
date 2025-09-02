@@ -1,5 +1,6 @@
 import oracledb from 'oracledb';
 import { env } from './env';
+import { logger } from '../app';
 
 let pool: any | null = null;
 
@@ -18,8 +19,7 @@ export async function initPool() {
     return pool;
   } catch (e) {
     // allow running without Oracle in dev
-    // eslint-disable-next-line no-console
-    console.warn('Oracle pool init failed (optional in dev):', (e as Error).message);
+    logger.warn({ error: e as Error }, 'Oracle pool init failed (optional in dev)');
     return null;
   }
 }

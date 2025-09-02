@@ -1,4 +1,5 @@
-import { withConn } from '../../config/db';
+import { withConn } from '../../config/db'
+import oracledb from 'oracledb';
 
 export type MatchRow = { ID: number; ATTENDEE_A_ID: number; ATTENDEE_B_ID: number; SCORE: number | null; CREATED_AT: Date };
 
@@ -8,7 +9,7 @@ export const matchesRepository = {
       const res = await conn.execute(
         `SELECT ID, ATTENDEE_A_ID, ATTENDEE_B_ID, SCORE, CREATED_AT FROM MATCHES WHERE ATTENDEE_A_ID = :id OR ATTENDEE_B_ID = :id ORDER BY CREATED_AT DESC`,
         { id: attendeeId },
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       return (res.rows as any[]) as MatchRow[];
     });
@@ -18,10 +19,10 @@ export const matchesRepository = {
       const lesser = Math.min(a, b); const greater = Math.max(a, b);
       const res = await conn.execute(
         `INSERT INTO MATCHES (ATTENDEE_A_ID, ATTENDEE_B_ID, SCORE) VALUES (:a, :b, :score) RETURNING ID INTO :ID`,
-        { a: lesser, b: greater, score: score ?? null, ID: { dir: (require('oracledb') as any).BIND_OUT, type: (require('oracledb') as any).NUMBER } },
+        { a: lesser, b: greater, score: score ?? null, ID: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER } },
         { autoCommit: true }
       );
-      return (res.outBinds as any).ID[0];
+      return (res.outBinds as { ID: number[] }).ID[0];
     });
   },
   async remove(id: number) {
@@ -35,12 +36,13 @@ export const matchesRepository = {
       const res = await conn.execute(
         `SELECT ID, NAME, COMPANY FROM ATTENDEES WHERE ID <> :id ORDER BY CREATED_AT DESC FETCH FIRST :limit ROWS ONLY`,
         { id: attendeeId, limit },
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       return (res.rows as any[]) || [];
     });
   }
 };
+
 
 
 

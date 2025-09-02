@@ -17,3 +17,4 @@ conferencesRouter.delete('/:id', auth(), rbac('conferences.write'), audit('confe
 
 
 
+

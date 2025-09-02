@@ -18,10 +18,13 @@ export async function list(req: Request, res: Response, next: NextFunction) {
   } catch (e) { next(e); }
 }
 
-export async function getById(req: Request, res: Response, next: NextFunction) {
+export async function getById(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const item = await conferencesRepository.findById(Number(req.params.id));
-    if (!item) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Conference not found' } });
+    if (!item) {
+      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Conference not found' } });
+      return;
+    }
     res.json(ok(item));
   } catch (e) { next(e); }
 }

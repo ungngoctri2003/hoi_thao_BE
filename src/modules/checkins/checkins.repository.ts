@@ -1,4 +1,5 @@
-import { withConn, withTransaction } from '../../config/db';
+import { withConn, withTransaction } from '../../config/db'
+import oracledb from 'oracledb';
 import { registrationsRepository } from '../registrations/registrations.repository';
 
 export type CheckinRow = {
@@ -17,22 +18,22 @@ export const checkinsRepository = {
       const recent = await conn.execute(
         `SELECT ID FROM CHECKINS WHERE REGISTRATION_ID = :regId AND CHECKIN_TIME > SYSTIMESTAMP - INTERVAL '1' DAY ORDER BY CHECKIN_TIME DESC FETCH FIRST 1 ROWS ONLY`,
         { regId: reg.ID },
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       const isDup = (recent.rows as any[]).length > 0;
       const status = isDup ? 'duplicate' : 'success';
       const res = await conn.execute(
         `INSERT INTO CHECKINS (REGISTRATION_ID, METHOD, STATUS) VALUES (:regId, 'qr', :status) RETURNING ID INTO :ID`,
-        { regId: reg.ID, status, ID: { dir: (require('oracledb') as any).BIND_OUT, type: (require('oracledb') as any).NUMBER } }
+        { regId: reg.ID, status, ID: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER } }
       );
       if (!isDup) {
         await conn.execute(`UPDATE REGISTRATIONS SET STATUS = 'checked-in' WHERE ID = :id`, { id: reg.ID });
       }
-      const id = (res.outBinds as any).ID[0];
+      const id = (res.outBinds as { ID: number[] }).ID[0];
       const row = await conn.execute(
         `SELECT ID, REGISTRATION_ID, CHECKIN_TIME, METHOD, STATUS FROM CHECKINS WHERE ID = :id`,
         { id },
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       return ((row.rows as any[])[0]) as CheckinRow;
     });
@@ -42,14 +43,14 @@ export const checkinsRepository = {
     return withTransaction(async (conn) => {
       const res = await conn.execute(
         `INSERT INTO CHECKINS (REGISTRATION_ID, METHOD, STATUS) VALUES (:regId, 'manual', 'success') RETURNING ID INTO :ID`,
-        { regId: registrationId, ID: { dir: (require('oracledb') as any).BIND_OUT, type: (require('oracledb') as any).NUMBER } }
+        { regId: registrationId, ID: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER } }
       );
       await conn.execute(`UPDATE REGISTRATIONS SET STATUS = 'checked-in' WHERE ID = :id`, { id: registrationId });
-      const id = (res.outBinds as any).ID[0];
+      const id = (res.outBinds as { ID: number[] }).ID[0];
       const row = await conn.execute(
         `SELECT ID, REGISTRATION_ID, CHECKIN_TIME, METHOD, STATUS FROM CHECKINS WHERE ID = :id`,
         { id },
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       return ((row.rows as any[])[0]) as CheckinRow;
     });
@@ -70,19 +71,20 @@ export const checkinsRepository = {
            ) t WHERE ROWNUM <= :maxRow
          ) WHERE rn > :minRow`,
         { ...binds, maxRow: offset + limit, minRow: offset },
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       const countRes = await conn.execute(
         `SELECT COUNT(*) AS CNT FROM CHECKINS c JOIN REGISTRATIONS r ON r.ID = c.REGISTRATION_ID WHERE ${where}`,
         binds,
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       const rows = (listRes.rows as any[]) || [];
-      const total = Number(((countRes.rows as any[])[0] as any).CNT);
+      const total = Number((countRes.rows as Array<{CNT: number}>)[0]?.CNT || 0);
       return { rows: rows as CheckinRow[], total };
     });
   }
 };
+
 
 
 

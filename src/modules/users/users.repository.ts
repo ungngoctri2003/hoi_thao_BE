@@ -1,4 +1,5 @@
 import { withConn } from '../../config/db';
+import oracledb from 'oracledb';
 
 type UserRow = {
   ID: number;
@@ -18,15 +19,15 @@ export const usersRepository = {
            ) t WHERE ROWNUM <= :maxRow
          ) WHERE rn > :minRow`,
         { maxRow: offset + limit, minRow: offset },
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       const countRes = await conn.execute(
         `SELECT COUNT(*) AS CNT FROM APP_USERS`,
         {},
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       const rows = (listRes.rows as any[]) || [];
-      const total = Number(((countRes.rows as any[])[0] as any).CNT);
+      const total = Number((countRes.rows as Array<{CNT: number}>)[0]?.CNT || 0);
       return { rows, total };
     });
   },
@@ -36,7 +37,7 @@ export const usersRepository = {
       const res = await conn.execute(
         `SELECT ID, EMAIL, NAME, PASSWORD_HASH FROM APP_USERS WHERE ID = :id`,
         { id },
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       const rows = (res.rows as any[]) || [];
       return (rows[0] as UserRow) || null;
@@ -47,7 +48,7 @@ export const usersRepository = {
       const res = await conn.execute(
         `SELECT ID, EMAIL, NAME, PASSWORD_HASH FROM APP_USERS WHERE EMAIL = :email`,
         { email },
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       const rows = (res.rows as any[]) || [];
       return (rows[0] as UserRow) || null;
@@ -58,10 +59,11 @@ export const usersRepository = {
     return withConn(async (conn) => {
       const res = await conn.execute(
         `INSERT INTO APP_USERS (EMAIL, NAME, PASSWORD_HASH) VALUES (:EMAIL, :NAME, :PASSWORD_HASH) RETURNING ID INTO :ID`,
-        { ...data, ID: { dir: (require('oracledb') as any).BIND_OUT, type: (require('oracledb') as any).NUMBER } },
+        { ...data, ID: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER } },
         { autoCommit: true }
       );
-      const id = (res.outBinds as any).ID[0];
+      const id = (res.outBinds as { ID: number[] }).ID[0];
+      if (!id) throw new Error('Failed to get created ID');
       return { ID: id, EMAIL: data.EMAIL, NAME: data.NAME, PASSWORD_HASH: data.PASSWORD_HASH };
     });
   },
@@ -76,7 +78,7 @@ export const usersRepository = {
          JOIN PERMISSIONS p ON p.ID = rp.PERMISSION_ID
          WHERE ur.USER_ID = :userId`,
         { userId },
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       const rows = (res.rows as any[]) || [];
       return rows.map(r => r.CODE as string);
@@ -91,7 +93,7 @@ export const usersRepository = {
   async update(id: number, data: Partial<{ EMAIL: string; NAME: string; PASSWORD_HASH: string | null; STATUS: string }>) {
     return withConn(async (conn) => {
       const fields: string[] = []; const binds: any = { id };
-      for (const key of Object.keys(data)) { fields.push(`${key} = :${key}`); binds[key] = (data as any)[key]; }
+      for (const key of Object.keys(data)) { fields.push(`${key} = :${key}`); binds[key] = (data as Record<string, any>)[key]; }
       if (fields.length === 0) return this.findById(id);
       await conn.execute(`UPDATE APP_USERS SET ${fields.join(', ')} WHERE ID = :id`, binds, { autoCommit: true });
       return this.findById(id);
@@ -125,7 +127,7 @@ export const usersRepository = {
       const res = await conn.execute(
         `SELECT r.ID, r.CODE, r.NAME FROM USER_ROLES ur JOIN ROLES r ON r.ID = ur.ROLE_ID WHERE ur.USER_ID = :userId`,
         { userId },
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       return (res.rows as any[]) || [];
     });

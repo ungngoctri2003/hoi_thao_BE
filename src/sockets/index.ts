@@ -1,5 +1,6 @@
 import { Server } from 'socket.io';
 import type { Server as HttpServer } from 'http';
+import { logger } from '../app';
 
 let ioInstance: Server | null = null;
 let messagesNs: ReturnType<Server['of']> | null = null;
@@ -23,58 +24,58 @@ export function initSocket(server: HttpServer) {
 
     // Handle connection errors
     io.on('connect_error', (error) => {
-      console.error('Socket connection error:', error);
+      logger.error({ error }, 'Socket connection error');
     });
 
     messagesNs.on('connection', (socket) => {
-      console.log(`User connected to messages namespace: ${socket.id}`);
+      logger.info({ socketId: socket.id }, 'User connected to messages namespace');
       
       socket.on('join', (room: string) => {
         socket.join(room);
-        console.log(`User ${socket.id} joined room: ${room}`);
+        logger.info({ socketId: socket.id, room }, 'User joined room');
       });
       
       socket.on('leave', (room: string) => {
         socket.leave(room);
-        console.log(`User ${socket.id} left room: ${room}`);
+        logger.info({ socketId: socket.id, room }, 'User left room');
       });
       
       socket.on('disconnect', () => {
-        console.log(`User disconnected from messages namespace: ${socket.id}`);
+        logger.info({ socketId: socket.id }, 'User disconnected from messages namespace');
       });
     });
 
     analyticsNs.on('connection', (socket) => {
-      console.log(`User connected to analytics namespace: ${socket.id}`);
+      logger.info({ socketId: socket.id }, 'User connected to analytics namespace');
       
       socket.on('join', (room: string) => {
         socket.join(room);
-        console.log(`User ${socket.id} joined analytics room: ${room}`);
+        logger.info({ socketId: socket.id, room }, 'User joined analytics room');
       });
       
       socket.on('leave', (room: string) => {
         socket.leave(room);
-        console.log(`User ${socket.id} left analytics room: ${room}`);
+        logger.info({ socketId: socket.id, room }, 'User left analytics room');
       });
       
       socket.on('disconnect', () => {
-        console.log(`User disconnected from analytics namespace: ${socket.id}`);
+        logger.info({ socketId: socket.id }, 'User disconnected from analytics namespace');
       });
     });
 
     ioInstance = io;
     return ioInstance;
   } catch (error) {
-    console.error('Failed to initialize Socket.IO:', error);
+    logger.error({ error }, 'Failed to initialize Socket.IO');
     throw error;
   }
 }
 
-export function emitSessionMessage(sessionId: number, payload: any) {
+export function emitSessionMessage(sessionId: number, payload: unknown) {
   messagesNs?.to(`session:${sessionId}`).emit('message', payload);
 }
 
-export function emitAnalytics(room: string, event: string, payload: any) {
+export function emitAnalytics(room: string, event: string, payload: unknown) {
   analyticsNs?.to(room).emit(event, payload);
 }
 

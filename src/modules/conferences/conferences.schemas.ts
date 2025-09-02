@@ -21,15 +21,13 @@ export const updateConferenceSchema = conferenceBaseSchema.partial();
 
 // Change status schema
 export const changeStatusSchema = z.object({
-  status: z.enum(['draft', 'published', 'active', 'completed', 'cancelled'], {
-    errorMap: () => ({ message: 'Invalid status value' })
-  })
+  status: z.enum(['draft', 'published', 'active', 'completed', 'cancelled'])
 });
 
 // Query parameters schema
 export const listConferencesSchema = z.object({
-  page: z.string().regex(/^\d+$/, 'Page must be a number').transform(Number).default('1'),
-  limit: z.string().regex(/^\d+$/, 'Limit must be a number').transform(Number).default('10'),
+  page: z.string().regex(/^\d+$/, 'Page must be a number').transform(Number).default(1),
+  limit: z.string().regex(/^\d+$/, 'Limit must be a number').transform(Number).default(10),
   search: z.string().optional(),
   category: z.string().optional(),
   status: z.enum(['draft', 'published', 'active', 'completed', 'cancelled']).optional(),

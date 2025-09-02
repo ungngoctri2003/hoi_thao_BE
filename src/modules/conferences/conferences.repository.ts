@@ -1,4 +1,5 @@
 import { withConn } from '../../config/db';
+import oracledb from 'oracledb';
 
 export type ConferenceRow = {
   ID: number;
@@ -26,15 +27,15 @@ export const conferencesRepository = {
            ) t WHERE ROWNUM <= :maxRow
          ) WHERE rn > :minRow`,
         { maxRow: offset + limit, minRow: offset },
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       const countRes = await conn.execute(
         `SELECT COUNT(*) AS CNT FROM CONFERENCES`,
         {},
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       const rows = (listRes.rows as any[]) || [];
-      const total = Number(((countRes.rows as any[])[0] as any).CNT);
+      const total = Number((countRes.rows as Array<{CNT: number}>)[0]?.CNT || 0);
       return { rows: rows as ConferenceRow[], total };
     });
   },
@@ -45,7 +46,7 @@ export const conferencesRepository = {
         `SELECT ID, NAME, DESCRIPTION, START_DATE, END_DATE, LOCATION, CATEGORY, ORGANIZER, CAPACITY, STATUS, CREATED_AT
          FROM CONFERENCES WHERE ID = :id`,
         { id },
-        { outFormat: (require('oracledb') as any).OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       const rows = (res.rows as any[]) || [];
       return (rows[0] as ConferenceRow) || null;
@@ -61,11 +62,12 @@ export const conferencesRepository = {
         {
           ...data,
           STATUS: data.STATUS || 'draft',
-          ID: { dir: (require('oracledb') as any).BIND_OUT, type: (require('oracledb') as any).NUMBER }
+          ID: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER }
         },
         { autoCommit: true }
       );
-      const id = (res.outBinds as any).ID[0];
+      const id = (res.outBinds as { ID: number[] }).ID[0];
+      if (!id) throw new Error('Failed to get created ID');
       return this.findById(id);
     });
   },
@@ -74,7 +76,7 @@ export const conferencesRepository = {
     return withConn(async (conn) => {
       const fields: string[] = [];
       const binds: any = { id };
-      for (const key of Object.keys(data)) { fields.push(`${key} = :${key}`); binds[key] = (data as any)[key]; }
+      for (const key of Object.keys(data)) { fields.push(`${key} = :${key}`); binds[key] = (data as Record<string, any>)[key]; }
       if (fields.length === 0) return this.findById(id);
       await conn.execute(`UPDATE CONFERENCES SET ${fields.join(', ')} WHERE ID = :id`, binds, { autoCommit: true });
       return this.findById(id);
@@ -94,6 +96,7 @@ export const conferencesRepository = {
     });
   }
 };
+
 
 
 
