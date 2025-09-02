@@ -24,7 +24,23 @@ export const sessionsRepository = {
         `SELECT ID, CONFERENCE_ID, ROOM_ID, TITLE, SPEAKER, START_TIME, END_TIME, STATUS, DESCRIPTION
          FROM SESSIONS WHERE ${where} ORDER BY START_TIME NULLS LAST`,
         binds,
-        { outFormat: oracledb.OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT, fetchInfo: { DESCRIPTION: { type: oracledb.STRING } } }
+      );
+      return (res.rows as any[]) as SessionRow[];
+    });
+  },
+
+  async listAll(filters: { conferenceId?: number, status?: string } | undefined) {
+    return withConn(async (conn) => {
+      const binds: any = {};
+      let where = '1=1';
+      if (filters?.conferenceId) { where += ' AND CONFERENCE_ID = :confId'; binds.confId = filters.conferenceId; }
+      if (filters?.status) { where += ' AND STATUS = :status'; binds.status = filters.status; }
+      const res = await conn.execute(
+        `SELECT ID, CONFERENCE_ID, ROOM_ID, TITLE, SPEAKER, START_TIME, END_TIME, STATUS, DESCRIPTION
+         FROM SESSIONS WHERE ${where} ORDER BY START_TIME NULLS LAST`,
+        binds,
+        { outFormat: oracledb.OUT_FORMAT_OBJECT, fetchInfo: { DESCRIPTION: { type: oracledb.STRING } } }
       );
       return (res.rows as any[]) as SessionRow[];
     });

@@ -63,6 +63,21 @@ export async function search(req: Request, res: Response, next: NextFunction) {
   } catch (e) { next(e); }
 }
 
+export async function updateMe(req: Request, res: Response, next: NextFunction) {
+  try {
+    const email = req.user!.email;
+    const attendee = await attendeesRepository.findByEmail(email);
+    
+    if (!attendee) {
+      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Attendee not found' } });
+      return;
+    }
+    
+    const updatedAttendee = await attendeesRepository.update(attendee.ID, req.body);
+    res.json(ok(updatedAttendee));
+  } catch (e) { next(e); }
+}
+
 
 
 

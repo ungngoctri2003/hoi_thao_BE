@@ -43,7 +43,7 @@ export function auth() {
         return;
       }
 
-      const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET!) as AuthUser;
+      const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET!) as any;
       if (!decoded || !decoded.id || !decoded.email) {
         res.status(401).json({ 
           error: { 
@@ -54,8 +54,20 @@ export function auth() {
         return;
       }
 
-      const perms = await usersRepository.getPermissions(decoded.id);
-      req.user = { ...decoded, permissions: perms };
+      // Ensure id is a number
+      const userId = Number(decoded.id);
+      if (isNaN(userId)) {
+        res.status(401).json({ 
+          error: { 
+            code: 'UNAUTHORIZED', 
+            message: 'Invalid user ID in token' 
+          } 
+        });
+        return;
+      }
+
+      const perms = await usersRepository.getPermissions(userId);
+      req.user = { id: userId, email: decoded.email, permissions: perms };
       next();
     } catch (error) {
       if (error instanceof jwt.JsonWebTokenError) {

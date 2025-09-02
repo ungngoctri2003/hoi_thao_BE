@@ -2,10 +2,14 @@ import { Router } from 'express';
 import { auth } from '../../middlewares/auth';
 import { rbac } from '../../middlewares/rbac';
 import { audit } from '../../middlewares/audit';
-import { list, getById, create, update, remove, changeStatus } from '../../modules/conferences/conferences.controller';
+import { list, getById, create, update, remove, changeStatus, listPublic } from '../../modules/conferences/conferences.controller';
 
 export const conferencesRouter = Router();
 
+// Public access for listing active conferences
+conferencesRouter.get('/', listPublic);
+
+// Protected fallback for other queries
 conferencesRouter.get('/', auth(), rbac('conferences.read'), list);
 conferencesRouter.post('/', auth(), rbac('conferences.write'), audit('conference', 'create', 'conference'), create);
 conferencesRouter.get('/:id', auth(), rbac('conferences.read'), getById);

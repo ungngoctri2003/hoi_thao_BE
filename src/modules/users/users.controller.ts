@@ -8,6 +8,19 @@ export async function me(req: Request, res: Response) {
   res.json(ok({ id: req.user!.id, email: req.user!.email, permissions: req.user!.permissions || [] }));
 }
 
+export async function updateMe(req: Request, res: Response, next: NextFunction) {
+  try {
+    const data: any = {};
+    if (req.body.email) data.EMAIL = req.body.email;
+    if (req.body.name) data.NAME = req.body.name;
+    if (req.body.avatar) data.AVATAR_URL = req.body.avatar;
+    if (req.body.password) data.PASSWORD_HASH = await hashPassword(req.body.password);
+    
+    const user = await usersRepository.update(req.user!.id, data);
+    res.json(ok(user));
+  } catch (e) { next(e); }
+}
+
 export async function list(req: Request, res: Response, next: NextFunction) {
   try {
     const { page, limit } = parsePagination(req.query);

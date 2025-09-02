@@ -2,6 +2,16 @@ import { Request, Response, NextFunction } from 'express';
 import { sessionsRepository } from './sessions.repository';
 import { ok } from '../../utils/responses';
 
+export async function listPublic(req: Request, res: Response, next: NextFunction) {
+  try {
+    const conferenceId = req.query.conferenceId ? Number(req.query.conferenceId) : undefined;
+    const status = req.query.status as string || undefined;
+    
+    const rows = await sessionsRepository.listAll({ conferenceId, status });
+    res.json(ok(rows));
+  } catch (e) { next(e); }
+}
+
 export async function list(req: Request, res: Response, next: NextFunction) {
   try {
     const rows = await sessionsRepository.list(Number(req.params.confId), {

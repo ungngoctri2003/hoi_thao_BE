@@ -27,11 +27,35 @@ export const conferencesRepository = {
            ) t WHERE ROWNUM <= :maxRow
          ) WHERE rn > :minRow`,
         { maxRow: offset + limit, minRow: offset },
-        { outFormat: oracledb.OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT, fetchInfo: { DESCRIPTION: { type: oracledb.STRING } } }
       );
       const countRes = await conn.execute(
         `SELECT COUNT(*) AS CNT FROM CONFERENCES`,
         {},
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
+      );
+      const rows = (listRes.rows as any[]) || [];
+      const total = Number((countRes.rows as Array<{CNT: number}>)[0]?.CNT || 0);
+      return { rows: rows as ConferenceRow[], total };
+    });
+  },
+
+  async listByStatus(page: number, limit: number, status: ConferenceRow['STATUS']) {
+    const offset = (page - 1) * limit;
+    return withConn(async (conn) => {
+      const listRes = await conn.execute(
+        `SELECT * FROM (
+           SELECT t.*, ROWNUM rn FROM (
+             SELECT ID, NAME, DESCRIPTION, START_DATE, END_DATE, LOCATION, CATEGORY, ORGANIZER, CAPACITY, STATUS, CREATED_AT
+             FROM CONFERENCES WHERE STATUS = :status ORDER BY CREATED_AT DESC
+           ) t WHERE ROWNUM <= :maxRow
+         ) WHERE rn > :minRow`,
+        { status, maxRow: offset + limit, minRow: offset },
+        { outFormat: oracledb.OUT_FORMAT_OBJECT, fetchInfo: { DESCRIPTION: { type: oracledb.STRING } } }
+      );
+      const countRes = await conn.execute(
+        `SELECT COUNT(*) AS CNT FROM CONFERENCES WHERE STATUS = :status`,
+        { status },
         { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       const rows = (listRes.rows as any[]) || [];
@@ -46,7 +70,7 @@ export const conferencesRepository = {
         `SELECT ID, NAME, DESCRIPTION, START_DATE, END_DATE, LOCATION, CATEGORY, ORGANIZER, CAPACITY, STATUS, CREATED_AT
          FROM CONFERENCES WHERE ID = :id`,
         { id },
-        { outFormat: oracledb.OUT_FORMAT_OBJECT }
+        { outFormat: oracledb.OUT_FORMAT_OBJECT, fetchInfo: { DESCRIPTION: { type: oracledb.STRING } } }
       );
       const rows = (res.rows as any[]) || [];
       return (rows[0] as ConferenceRow) || null;

@@ -10,6 +10,20 @@ import {
   conferenceIdSchema
 } from './conferences.schemas';
 
+export async function listPublic(req: Request, res: Response, next: NextFunction) {
+  try {
+    const status = (req.query.status as string) || '';
+    if (status !== 'active') {
+      // Not a public query, pass to next matching route (the protected one)
+      return next('route');
+    }
+
+    const { page, limit } = parsePagination(req.query);
+    const { rows, total } = await conferencesRepository.listByStatus(page, limit, 'active');
+    res.json(ok(rows, meta(page, limit, total)));
+  } catch (e) { next(e); }
+}
+
 export async function list(req: Request, res: Response, next: NextFunction) {
   try {
     const { page, limit } = parsePagination(req.query);

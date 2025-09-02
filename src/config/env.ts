@@ -1,4 +1,8 @@
 import dotenv from 'dotenv';
+const { ensureEnvFile } = require('../../scripts/generate-env');
+
+// Đảm bảo file .env tồn tại trước khi load
+ensureEnvFile();
 
 dotenv.config();
 

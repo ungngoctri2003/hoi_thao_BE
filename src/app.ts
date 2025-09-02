@@ -5,6 +5,7 @@ import rateLimit from 'express-rate-limit';
 import pino from 'pino';
 import pinoHttp from 'pino-http';
 import dotenv from 'dotenv';
+import oracledb from 'oracledb';
 import { metricsRouter, registerMetrics } from './config/metrics';
 import { errorHandler } from './middlewares/error';
 import { corsOptions } from './middlewares/cors';
@@ -31,6 +32,33 @@ app.use(rateLimit({ windowMs, max, standardHeaders: true, legacyHeaders: false }
 app.use(metricsMiddleware());
 
 app.get('/healthz', (_req, res) => res.json({ data: { status: 'ok' } }));
+
+// Database health check endpoint
+app.get('/healthz/db', async (_req, res) => {
+  try {
+    const { withConn } = await import('./config/db');
+    const result = await withConn(async (conn) => {
+      const query = await conn.execute('SELECT 1 as test FROM DUAL', {}, { outFormat: oracledb.OUT_FORMAT_OBJECT });
+      return query.rows?.[0] || null;
+    });
+    
+    res.json({ 
+      data: { 
+        status: 'ok', 
+        database: 'connected',
+        test_query: result
+      } 
+    });
+  } catch (error) {
+    res.status(503).json({ 
+      error: { 
+        code: 'DATABASE_ERROR',
+        message: 'Database connection failed',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      } 
+    });
+  }
+});
 app.use('/metrics', metricsRouter);
 setupSwagger(app);
 

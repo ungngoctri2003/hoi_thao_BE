@@ -90,13 +90,13 @@ export const usersRepository = {
     });
   },
 
-  async update(id: number, data: Partial<{ EMAIL: string; NAME: string; PASSWORD_HASH: string | null; STATUS: string }>) {
+  async update(id: number, data: Partial<{ EMAIL: string; NAME: string; PASSWORD_HASH: string | null; STATUS: string; AVATAR_URL: string }>) {
     return withConn(async (conn) => {
       const fields: string[] = []; const binds: any = { id };
       for (const key of Object.keys(data)) { fields.push(`${key} = :${key}`); binds[key] = (data as Record<string, any>)[key]; }
-      if (fields.length === 0) return this.findById(id);
+      if (fields.length === 0) return usersRepository.findById(id);
       await conn.execute(`UPDATE APP_USERS SET ${fields.join(', ')} WHERE ID = :id`, binds, { autoCommit: true });
-      return this.findById(id);
+      return usersRepository.findById(id);
     });
   },
 
