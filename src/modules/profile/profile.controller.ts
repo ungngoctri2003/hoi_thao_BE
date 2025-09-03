@@ -9,7 +9,7 @@ export async function getProfile(req: Request, res: Response, next: NextFunction
     const email = req.user!.email;
     const data = await withConn(async (conn) => {
       const userRes = await conn.execute(
-        `SELECT ID, EMAIL, NAME, STATUS, CREATED_AT, LAST_LOGIN FROM APP_USERS WHERE ID = :id`,
+        `SELECT ID, EMAIL, NAME, STATUS, CREATED_AT, LAST_LOGIN, AVATAR_URL FROM APP_USERS WHERE ID = :id`,
         { id: userId },
         { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
@@ -18,9 +18,18 @@ export async function getProfile(req: Request, res: Response, next: NextFunction
         { email },
         { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
+      
+      const user = ((userRes.rows as any[])[0]) || null;
+      const attendee = ((attendeeRes.rows as any[])[0]) || null;
+      
+      // Add role information from req.user (set by auth middleware)
+      if (user) {
+        user.ROLE_CODE = req.user!.role;
+      }
+      
       return {
-        user: ((userRes.rows as any[])[0]) || null,
-        attendee: ((attendeeRes.rows as any[])[0]) || null
+        user: user,
+        attendee: attendee
       };
     });
     res.json(ok(data));

@@ -7,6 +7,12 @@ export const authService = {
   async login(email: string, password: string) {
     const user = await usersRepository.findByEmail(email);
     if (!user) throw Object.assign(new Error('Invalid credentials'), { status: 401 });
+    
+    // Check if user account is active
+    if (user.STATUS && user.STATUS !== 'active') {
+      throw Object.assign(new Error('Account is disabled'), { status: 401 });
+    }
+    
     const ok = user.PASSWORD_HASH ? await comparePassword(password, user.PASSWORD_HASH) : false;
     if (!ok) throw Object.assign(new Error('Invalid credentials'), { status: 401 });
     const payload = { id: user.ID, email: user.EMAIL };

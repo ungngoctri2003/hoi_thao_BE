@@ -6,6 +6,9 @@ type UserRow = {
   EMAIL: string;
   NAME: string;
   PASSWORD_HASH: string | null;
+  STATUS?: string | null;
+  FIREBASE_UID?: string | null;
+  AVATAR_URL?: string | null;
 };
 
 export const usersRepository = {
@@ -15,7 +18,10 @@ export const usersRepository = {
       const listRes = await conn.execute(
         `SELECT * FROM (
            SELECT t.*, ROWNUM rn FROM (
-             SELECT ID, EMAIL, NAME, STATUS, CREATED_AT, LAST_LOGIN FROM APP_USERS ORDER BY CREATED_AT DESC
+             SELECT u.ID, u.EMAIL, u.NAME, u.STATUS, u.CREATED_AT, u.LAST_LOGIN, u.AVATAR_URL, 
+                    (SELECT r.CODE FROM USER_ROLES ur2 JOIN ROLES r ON ur2.ROLE_ID = r.ID WHERE ur2.USER_ID = u.ID AND ROWNUM = 1) as ROLE_CODE
+             FROM APP_USERS u
+             ORDER BY u.CREATED_AT DESC
            ) t WHERE ROWNUM <= :maxRow
          ) WHERE rn > :minRow`,
         { maxRow: offset + limit, minRow: offset },
@@ -35,7 +41,7 @@ export const usersRepository = {
   async findById(id: number): Promise<UserRow | null> {
     return withConn(async (conn) => {
       const res = await conn.execute(
-        `SELECT ID, EMAIL, NAME, PASSWORD_HASH FROM APP_USERS WHERE ID = :id`,
+        `SELECT ID, EMAIL, NAME, PASSWORD_HASH, STATUS, FIREBASE_UID, AVATAR_URL FROM APP_USERS WHERE ID = :id`,
         { id },
         { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
@@ -46,7 +52,7 @@ export const usersRepository = {
   async findByEmail(email: string): Promise<UserRow | null> {
     return withConn(async (conn) => {
       const res = await conn.execute(
-        `SELECT ID, EMAIL, NAME, PASSWORD_HASH FROM APP_USERS WHERE EMAIL = :email`,
+        `SELECT ID, EMAIL, NAME, PASSWORD_HASH, STATUS, FIREBASE_UID, AVATAR_URL FROM APP_USERS WHERE EMAIL = :email`,
         { email },
         { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
@@ -55,16 +61,54 @@ export const usersRepository = {
     });
   },
 
-  async create(data: { EMAIL: string; NAME: string; PASSWORD_HASH: string | null; }): Promise<UserRow> {
+  async create(data: { EMAIL: string; NAME: string; PASSWORD_HASH: string | null; FIREBASE_UID?: string | null; AVATAR_URL?: string | null; }): Promise<UserRow> {
     return withConn(async (conn) => {
-      const res = await conn.execute(
-        `INSERT INTO APP_USERS (EMAIL, NAME, PASSWORD_HASH) VALUES (:EMAIL, :NAME, :PASSWORD_HASH) RETURNING ID INTO :ID`,
-        { ...data, ID: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER } },
-        { autoCommit: true }
-      );
+      // Build dynamic query based on available data
+      const fields = ['EMAIL', 'NAME'];
+      const values = [':EMAIL', ':NAME'];
+      const bindParams: any = {
+        EMAIL: data.EMAIL,
+        NAME: data.NAME,
+        ID: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER }
+      };
+      
+      // Add optional fields only if they have values
+      if (data.PASSWORD_HASH !== null && data.PASSWORD_HASH !== undefined) {
+        fields.push('PASSWORD_HASH');
+        values.push(':PASSWORD_HASH');
+        bindParams.PASSWORD_HASH = data.PASSWORD_HASH;
+      }
+      
+      if (data.FIREBASE_UID !== null && data.FIREBASE_UID !== undefined) {
+        fields.push('FIREBASE_UID');
+        values.push(':FIREBASE_UID');
+        bindParams.FIREBASE_UID = data.FIREBASE_UID;
+      }
+      
+      if (data.AVATAR_URL !== null && data.AVATAR_URL !== undefined) {
+        fields.push('AVATAR_URL');
+        values.push(':AVATAR_URL');
+        bindParams.AVATAR_URL = data.AVATAR_URL;
+      }
+      
+      const query = `INSERT INTO APP_USERS (${fields.join(', ')}) VALUES (${values.join(', ')}) RETURNING ID INTO :ID`;
+      
+      console.log('Creating user with query:', query);
+      console.log('Bind params:', bindParams);
+      
+      const res = await conn.execute(query, bindParams, { autoCommit: true });
+      
       const id = (res.outBinds as { ID: number[] }).ID[0];
       if (!id) throw new Error('Failed to get created ID');
-      return { ID: id, EMAIL: data.EMAIL, NAME: data.NAME, PASSWORD_HASH: data.PASSWORD_HASH };
+      
+      return { 
+        ID: id, 
+        EMAIL: data.EMAIL, 
+        NAME: data.NAME, 
+        PASSWORD_HASH: data.PASSWORD_HASH, 
+        FIREBASE_UID: data.FIREBASE_UID || null, 
+        AVATAR_URL: data.AVATAR_URL || null 
+      };
     });
   },
 
@@ -90,7 +134,7 @@ export const usersRepository = {
     });
   },
 
-  async update(id: number, data: Partial<{ EMAIL: string; NAME: string; PASSWORD_HASH: string | null; STATUS: string; AVATAR_URL: string }>) {
+  async update(id: number, data: Partial<{ EMAIL: string; NAME: string; PASSWORD_HASH: string | null; STATUS: string; AVATAR_URL: string; FIREBASE_UID: string }>) {
     return withConn(async (conn) => {
       const fields: string[] = []; const binds: any = { id };
       for (const key of Object.keys(data)) { fields.push(`${key} = :${key}`); binds[key] = (data as Record<string, any>)[key]; }
@@ -122,6 +166,12 @@ export const usersRepository = {
     });
   },
 
+  async removeAllRoles(userId: number) {
+    return withConn(async (conn) => {
+      await conn.execute(`DELETE FROM USER_ROLES WHERE USER_ID = :userId`, { userId }, { autoCommit: true });
+    });
+  },
+
   async listRoles(userId: number) {
     return withConn(async (conn) => {
       const res = await conn.execute(
@@ -135,6 +185,43 @@ export const usersRepository = {
   async setPassword(id: number, passwordHash: string) {
     return withConn(async (conn) => {
       await conn.execute(`UPDATE APP_USERS SET PASSWORD_HASH = :hash WHERE ID = :id`, { hash: passwordHash, id }, { autoCommit: true });
+    });
+  },
+
+  async findRoleByCode(roleCode: string) {
+    return withConn(async (conn) => {
+      const res = await conn.execute(
+        `SELECT ID, CODE, NAME FROM ROLES WHERE CODE = :code`,
+        { code: roleCode },
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
+      );
+      const rows = (res.rows as any[]) || [];
+      return rows[0] || null;
+    });
+  },
+
+  async getUsersByRole(roleId: number) {
+    return withConn(async (conn) => {
+      const res = await conn.execute(
+        `SELECT u.ID, u.EMAIL, u.NAME, u.STATUS, u.AVATAR_URL 
+         FROM APP_USERS u 
+         JOIN USER_ROLES ur ON u.ID = ur.USER_ID 
+         WHERE ur.ROLE_ID = :roleId`,
+        { roleId },
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
+      );
+      return (res.rows as any[]) || [];
+    });
+  },
+
+  async findAll() {
+    return withConn(async (conn) => {
+      const res = await conn.execute(
+        `SELECT ID, EMAIL, NAME, STATUS, AVATAR_URL FROM APP_USERS ORDER BY ID`,
+        {},
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
+      );
+      return (res.rows as any[]) || [];
     });
   }
 };

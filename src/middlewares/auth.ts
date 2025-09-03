@@ -6,6 +6,9 @@ import { logger } from '../app';
 export type AuthUser = {
   id: number;
   email: string;
+  name?: string;
+  role?: string;
+  status?: string;
   permissions?: string[];
 };
 
@@ -66,8 +69,41 @@ export function auth() {
         return;
       }
 
+      // Get full user information including role and status
+      const user = await usersRepository.findById(userId);
+      if (!user) {
+        res.status(401).json({ 
+          error: { 
+            code: 'UNAUTHORIZED', 
+            message: 'User not found' 
+          } 
+        });
+        return;
+      }
+
+      // Check if user is active
+      if (user.STATUS && user.STATUS !== 'active') {
+        res.status(401).json({ 
+          error: { 
+            code: 'ACCOUNT_DISABLED', 
+            message: 'Account is disabled' 
+          } 
+        });
+        return;
+      }
+
       const perms = await usersRepository.getPermissions(userId);
-      req.user = { id: userId, email: decoded.email, permissions: perms };
+      const userRoles = await usersRepository.listRoles(userId);
+      const primaryRole = userRoles.length > 0 ? userRoles[0].CODE : 'attendee';
+      
+      req.user = { 
+        id: userId, 
+        email: decoded.email, 
+        name: user.NAME,
+        role: primaryRole,
+        status: user.STATUS || 'active',
+        permissions: perms 
+      };
       next();
     } catch (error) {
       if (error instanceof jwt.JsonWebTokenError) {

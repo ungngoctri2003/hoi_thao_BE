@@ -13,6 +13,7 @@ export type AttendeeRow = {
   SPECIAL_NEEDS: string | null;
   DATE_OF_BIRTH: Date | null;
   GENDER: string | null;
+  FIREBASE_UID?: string | null;
   CREATED_AT: Date;
 };
 
@@ -81,8 +82,8 @@ export const attendeesRepository = {
   async create(data: Omit<AttendeeRow, 'ID' | 'CREATED_AT'>): Promise<AttendeeRow> {
     return withConn(async (conn) => {
       const res = await conn.execute(
-        `INSERT INTO ATTENDEES (NAME, EMAIL, PHONE, COMPANY, POSITION, AVATAR_URL, DIETARY, SPECIAL_NEEDS, DATE_OF_BIRTH, GENDER)
-         VALUES (:NAME, :EMAIL, :PHONE, :COMPANY, :POSITION, :AVATAR_URL, :DIETARY, :SPECIAL_NEEDS, :DATE_OF_BIRTH, :GENDER)
+        `INSERT INTO ATTENDEES (NAME, EMAIL, PHONE, COMPANY, POSITION, AVATAR_URL, DIETARY, SPECIAL_NEEDS, DATE_OF_BIRTH, GENDER, FIREBASE_UID)
+         VALUES (:NAME, :EMAIL, :PHONE, :COMPANY, :POSITION, :AVATAR_URL, :DIETARY, :SPECIAL_NEEDS, :DATE_OF_BIRTH, :GENDER, :FIREBASE_UID)
          RETURNING ID INTO :ID`,
         { ...data, ID: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER } },
         { autoCommit: true }

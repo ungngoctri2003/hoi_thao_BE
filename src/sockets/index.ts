@@ -13,14 +13,15 @@ export function initSocket(server: HttpServer) {
     const io = new Server(server, {
       path: '/ws',
       cors: { 
-        origin: process.env.CORS_ORIGINS?.split(',') || ['http://localhost:3000'],
+        origin: process.env.CORS_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:3001'],
         credentials: true
       },
       transports: ['websocket', 'polling']
     });
 
-    messagesNs = io.of('/ws/messages');
-    analyticsNs = io.of('/ws/analytics');
+    // Use default namespace for main connections
+    messagesNs = io;
+    analyticsNs = io.of('/analytics');
 
     // Handle connection errors
     io.on('connect_error', (error) => {
@@ -28,7 +29,7 @@ export function initSocket(server: HttpServer) {
     });
 
     messagesNs.on('connection', (socket) => {
-      logger.info({ socketId: socket.id }, 'User connected to messages namespace');
+      logger.info({ socketId: socket.id }, 'User connected to main namespace');
       
       socket.on('join', (room: string) => {
         socket.join(room);
@@ -41,7 +42,7 @@ export function initSocket(server: HttpServer) {
       });
       
       socket.on('disconnect', () => {
-        logger.info({ socketId: socket.id }, 'User disconnected from messages namespace');
+        logger.info({ socketId: socket.id }, 'User disconnected from main namespace');
       });
     });
 
@@ -77,6 +78,80 @@ export function emitSessionMessage(sessionId: number, payload: unknown) {
 
 export function emitAnalytics(room: string, event: string, payload: unknown) {
   analyticsNs?.to(room).emit(event, payload);
+}
+
+export function emitUserPermissionChange(userId: number, payload: {
+  type: 'role_changed' | 'permission_changed';
+  oldRole?: string;
+  newRole?: string;
+  permissions?: any[];
+  timestamp: string;
+}) {
+  // Emit to user-specific room
+  messagesNs?.to(`user:${userId}`).emit('permission_change', payload);
+  
+  // Also emit to analytics namespace for tracking
+  analyticsNs?.to(`user:${userId}`).emit('permission_change', payload);
+  
+  logger.info({ userId, payload }, 'Emitted permission change notification');
+}
+
+export function emitUserNotification(userId: number | string, payload: {
+  type: 'system_notification';
+  title: string;
+  message: string;
+  notificationType: 'info' | 'success' | 'warning' | 'error';
+  timestamp: string;
+  notificationId?: number;
+  category?: string;
+  data?: any;
+}) {
+  if (userId === 'all') {
+    // Emit to all connected users
+    messagesNs?.emit('system_notification', payload);
+    analyticsNs?.emit('system_notification', payload);
+    logger.info({ payload }, 'Emitted broadcast system notification');
+  } else {
+    // Emit to specific user
+    messagesNs?.to(`user:${userId}`).emit('system_notification', payload);
+    analyticsNs?.to(`user:${userId}`).emit('system_notification', payload);
+    logger.info({ userId, payload }, 'Emitted user-specific system notification');
+  }
+}
+
+// Enhanced notification functions
+export function emitNotificationUpdate(userId: number, payload: {
+  type: 'notification_update';
+  action: 'created' | 'read' | 'archived' | 'deleted';
+  notificationId: number;
+  timestamp: string;
+}) {
+  messagesNs?.to(`user:${userId}`).emit('notification_update', payload);
+  analyticsNs?.to(`user:${userId}`).emit('notification_update', payload);
+  logger.info({ userId, payload }, 'Emitted notification update');
+}
+
+export function emitNotificationStats(userId: number, stats: {
+  total_notifications: number;
+  unread_count: number;
+  active_count: number;
+}) {
+  messagesNs?.to(`user:${userId}`).emit('notification_stats', stats);
+  analyticsNs?.to(`user:${userId}`).emit('notification_stats', stats);
+  logger.info({ userId, stats }, 'Emitted notification stats');
+}
+
+export function emitBulkNotificationUpdate(userIds: number[], payload: {
+  type: 'bulk_notification_update';
+  action: 'created' | 'broadcast';
+  count: number;
+  timestamp: string;
+}) {
+  userIds.forEach(userId => {
+    messagesNs?.to(`user:${userId}`).emit('bulk_notification_update', payload);
+    analyticsNs?.to(`user:${userId}`).emit('bulk_notification_update', payload);
+  });
+  logger.info({ userIds: userIds.length, payload }, 'Emitted bulk notification update');
 }
 
 
