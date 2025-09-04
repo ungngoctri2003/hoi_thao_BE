@@ -16,3 +16,4 @@ badgesRouter.post('/badges/attendees/:id/evaluate', auth(), rbac('conferences.re
 
 
 
+

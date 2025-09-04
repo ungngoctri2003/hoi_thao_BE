@@ -15,3 +15,4 @@ certificatesRouter.post('/certificates/generate', auth(), rbac('conferences.read
 
 
 
+
