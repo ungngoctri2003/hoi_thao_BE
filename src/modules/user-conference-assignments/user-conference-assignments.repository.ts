@@ -1,6 +1,34 @@
 import { withConn } from '../../config/db';
 import oracledb from 'oracledb';
 
+// Helper function to clean data and remove circular references
+function cleanData(obj: any): any {
+  if (obj === null || obj === undefined) return obj;
+  if (typeof obj !== 'object') return obj;
+  if (obj instanceof Date) return obj.toISOString();
+  if (Array.isArray(obj)) return obj.map(cleanData);
+  
+  // Check for circular reference by trying to stringify
+  try {
+    JSON.stringify(obj);
+    return obj;
+  } catch (e) {
+    // If circular reference, create a clean copy
+    const cleaned: any = {};
+    for (const key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        try {
+          cleaned[key] = cleanData(obj[key]);
+        } catch (e) {
+          // Skip properties that cause circular reference issues
+          cleaned[key] = null;
+        }
+      }
+    }
+    return cleaned;
+  }
+}
+
 export interface UserConferenceAssignment {
   id: number;
   userId: number;
@@ -260,19 +288,46 @@ export class UserConferenceAssignmentsRepository {
       const result = await conn.execute(query, { conferenceId }, { outFormat: oracledb.OUT_FORMAT_OBJECT });
       
       if (result.rows && result.rows.length > 0) {
-        return result.rows.map((row: any) => ({
-          id: row.ID,
-          userId: row.USERID,
-          conferenceId: row.CONFERENCEID,
-          permissions: row.PERMISSIONS,
-          assignedBy: row.ASSIGNEDBY,
-          assignedAt: row.ASSIGNEDAT,
-          isActive: row.ISACTIVE,
-          createdAt: row.CREATEDAT,
-          updatedAt: row.UPDATEDAT,
-          userName: row.USERNAME,
-          userEmail: row.USEREMAIL
-        }));
+        const assignments = [];
+        for (const row of result.rows) {
+          // Handle CLOB for permissions
+          let permissions = {};
+          if (row.PERMISSIONS) {
+            if (typeof row.PERMISSIONS === 'string') {
+              try {
+                permissions = JSON.parse(row.PERMISSIONS);
+              } catch (e) {
+                console.warn('Failed to parse permissions JSON:', e);
+                permissions = {};
+              }
+            } else if (row.PERMISSIONS.getData) {
+              // It's a LOB object
+              try {
+                const lobData = await row.PERMISSIONS.getData();
+                permissions = JSON.parse(lobData);
+              } catch (error) {
+                console.warn('Error reading LOB permissions data:', error);
+                permissions = {};
+              }
+            }
+          }
+          
+          // Create a completely new plain object with only primitive values
+          assignments.push({
+            ID: Number(row.ID || 0),
+            USER_ID: Number(row.USERID || 0),
+            CONFERENCE_ID: Number(row.CONFERENCEID || 0),
+            PERMISSIONS: permissions || {},
+            ASSIGNED_BY: Number(row.ASSIGNEDBY || 0),
+            ASSIGNED_AT: String(row.ASSIGNEDAT || ''),
+            IS_ACTIVE: Number(row.ISACTIVE || 0),
+            CREATED_AT: String(row.CREATEDAT || ''),
+            UPDATED_AT: String(row.UPDATEDAT || ''),
+            USER_NAME: String(row.USERNAME || ''),
+            USER_EMAIL: String(row.USEREMAIL || '')
+          });
+        }
+        return assignments;
       }
       
       return [];

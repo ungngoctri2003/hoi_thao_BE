@@ -10,7 +10,7 @@ export const conferenceBaseSchema = z.object({
   CATEGORY: z.string().max(100, 'Category too long').optional(),
   ORGANIZER: z.string().max(255, 'Organizer name too long').optional(),
   CAPACITY: z.number().int().positive('Capacity must be a positive integer').optional(),
-  STATUS: z.enum(['draft', 'published', 'active', 'completed', 'cancelled']).optional()
+  STATUS: z.enum(['draft', 'active', 'completed']).optional()
 });
 
 // Create conference schema
@@ -21,7 +21,7 @@ export const updateConferenceSchema = conferenceBaseSchema.partial();
 
 // Change status schema
 export const changeStatusSchema = z.object({
-  status: z.enum(['draft', 'published', 'active', 'completed', 'cancelled'])
+  status: z.enum(['draft', 'active', 'completed'])
 });
 
 // Query parameters schema
@@ -30,7 +30,7 @@ export const listConferencesSchema = z.object({
   limit: z.string().regex(/^\d+$/, 'Limit must be a number').transform(Number).default(10),
   search: z.string().optional(),
   category: z.string().optional(),
-  status: z.enum(['draft', 'published', 'active', 'completed', 'cancelled']).optional(),
+  status: z.enum(['draft', 'active', 'completed']).optional(),
   startDate: z.string().datetime().optional(),
   endDate: z.string().datetime().optional()
 });

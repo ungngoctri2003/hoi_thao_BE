@@ -11,11 +11,11 @@ conferencesRouter.get('/', listPublic);
 
 // Protected fallback for other queries
 conferencesRouter.get('/', auth(), rbac('conferences.view'), list);
-conferencesRouter.post('/', auth(), rbac('conferences.write'), audit('conference', 'create', 'conference'), create);
+conferencesRouter.post('/', auth(), rbac('conferences.create'), audit('conference', 'create', 'conference'), create);
 conferencesRouter.get('/:id', auth(), rbac('conferences.view'), getById);
-conferencesRouter.patch('/:id', auth(), rbac('conferences.write'), audit('conference', 'update', 'conference'), update);
-conferencesRouter.patch('/:id/status', auth(), rbac('conferences.write'), audit('conference', 'status', 'conference'), changeStatus);
-conferencesRouter.delete('/:id', auth(), rbac('conferences.write'), audit('conference', 'delete', 'conference'), remove);
+conferencesRouter.patch('/:id', auth(), rbac('conferences.update'), audit('conference', 'update', 'conference'), update);
+conferencesRouter.patch('/:id/status', auth(), rbac('conferences.update'), audit('conference', 'status', 'conference'), changeStatus);
+conferencesRouter.delete('/:id', auth(), rbac('conferences.delete'), audit('conference', 'delete', 'conference'), remove);
 
 
 

@@ -66,9 +66,28 @@ export class UserConferenceAssignmentsController {
       const { userId } = req.params;
       const assignments = await userConferenceAssignmentsRepository.findByUserId(Number(userId));
       
+      // Clean the data to avoid circular references with deep serialization
+      const cleanAssignments = assignments.map((assignment: any) => {
+        const cleanAssignment = {
+          id: Number(assignment.ID || assignment.id || 0),
+          userId: Number(assignment.USER_ID || assignment.userId || 0),
+          conferenceId: Number(assignment.CONFERENCE_ID || assignment.conferenceId || 0),
+          permissions: assignment.PERMISSIONS || assignment.permissions || {},
+          assignedBy: Number(assignment.ASSIGNED_BY || assignment.assignedBy || 0),
+          assignedAt: String(assignment.ASSIGNED_AT || assignment.assignedAt || ''),
+          isActive: Number(assignment.IS_ACTIVE || assignment.isActive || 0),
+          createdAt: String(assignment.CREATED_AT || assignment.createdAt || ''),
+          updatedAt: String(assignment.UPDATED_AT || assignment.updatedAt || ''),
+          userName: String(assignment.USER_NAME || assignment.userName || ''),
+          userEmail: String(assignment.USER_EMAIL || assignment.userEmail || ''),
+          conferenceName: String(assignment.CONFERENCE_NAME || assignment.conferenceName || '')
+        };
+        return JSON.parse(JSON.stringify(cleanAssignment));
+      });
+      
       res.json({
         success: true,
-        data: assignments
+        data: cleanAssignments
       });
     } catch (error) {
       next(error);
@@ -90,9 +109,28 @@ export class UserConferenceAssignmentsController {
 
       const assignments = await userConferenceAssignmentsRepository.findByUserId(Number(userId));
       
+      // Clean the data to avoid circular references with deep serialization
+      const cleanAssignments = assignments.map((assignment: any) => {
+        const cleanAssignment = {
+          id: Number(assignment.ID || assignment.id || 0),
+          userId: Number(assignment.USER_ID || assignment.userId || 0),
+          conferenceId: Number(assignment.CONFERENCE_ID || assignment.conferenceId || 0),
+          permissions: assignment.PERMISSIONS || assignment.permissions || {},
+          assignedBy: Number(assignment.ASSIGNED_BY || assignment.assignedBy || 0),
+          assignedAt: String(assignment.ASSIGNED_AT || assignment.assignedAt || ''),
+          isActive: Number(assignment.IS_ACTIVE || assignment.isActive || 0),
+          createdAt: String(assignment.CREATED_AT || assignment.createdAt || ''),
+          updatedAt: String(assignment.UPDATED_AT || assignment.updatedAt || ''),
+          userName: String(assignment.USER_NAME || assignment.userName || ''),
+          userEmail: String(assignment.USER_EMAIL || assignment.userEmail || ''),
+          conferenceName: String(assignment.CONFERENCE_NAME || assignment.conferenceName || '')
+        };
+        return JSON.parse(JSON.stringify(cleanAssignment));
+      });
+      
       res.json({
         success: true,
-        data: assignments
+        data: cleanAssignments
       });
     } catch (error) {
       next(error);
@@ -105,9 +143,31 @@ export class UserConferenceAssignmentsController {
       const { conferenceId } = req.params;
       const assignments = await userConferenceAssignmentsRepository.findByConferenceId(Number(conferenceId));
       
+      // Clean the data to avoid circular references with deep serialization
+      const cleanAssignments = assignments.map((assignment: any) => {
+        // Create a completely new object with only the data we need
+        const cleanAssignment = {
+          id: Number(assignment.ID || assignment.id || 0),
+          userId: Number(assignment.USER_ID || assignment.userId || 0),
+          conferenceId: Number(assignment.CONFERENCE_ID || assignment.conferenceId || 0),
+          permissions: assignment.PERMISSIONS || assignment.permissions || {},
+          assignedBy: Number(assignment.ASSIGNED_BY || assignment.assignedBy || 0),
+          assignedAt: String(assignment.ASSIGNED_AT || assignment.assignedAt || ''),
+          isActive: Number(assignment.IS_ACTIVE || assignment.isActive || 0),
+          createdAt: String(assignment.CREATED_AT || assignment.createdAt || ''),
+          updatedAt: String(assignment.UPDATED_AT || assignment.updatedAt || ''),
+          userName: String(assignment.USER_NAME || assignment.userName || ''),
+          userEmail: String(assignment.USER_EMAIL || assignment.userEmail || ''),
+          conferenceName: String(assignment.CONFERENCE_NAME || assignment.conferenceName || '')
+        };
+        
+        // Return a JSON-parsed copy to ensure no circular references
+        return JSON.parse(JSON.stringify(cleanAssignment));
+      });
+      
       res.json({
         success: true,
-        data: assignments
+        data: cleanAssignments
       });
     } catch (error) {
       next(error);

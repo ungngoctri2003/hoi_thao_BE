@@ -79,12 +79,25 @@ export const conferencesRepository = {
 
   async create(data: Omit<ConferenceRow, 'ID' | 'STATUS' | 'CREATED_AT'> & { STATUS?: ConferenceRow['STATUS'] }) {
     return withConn(async (conn) => {
+      // Convert date strings to proper format for Oracle
+      const formatDate = (dateStr: string) => {
+        if (!dateStr) return null;
+        // If it's already in ISO format, convert to Oracle date format
+        if (dateStr.includes('T')) {
+          return new Date(dateStr);
+        }
+        // If it's in YYYY-MM-DD format, convert to Date object
+        return new Date(dateStr + 'T00:00:00.000Z');
+      };
+
       const res = await conn.execute(
         `INSERT INTO CONFERENCES (NAME, DESCRIPTION, START_DATE, END_DATE, LOCATION, CATEGORY, ORGANIZER, CAPACITY, STATUS)
          VALUES (:NAME, :DESCRIPTION, :START_DATE, :END_DATE, :LOCATION, :CATEGORY, :ORGANIZER, :CAPACITY, :STATUS)
          RETURNING ID INTO :ID`,
         {
           ...data,
+          START_DATE: formatDate(data.START_DATE),
+          END_DATE: formatDate(data.END_DATE),
           STATUS: data.STATUS || 'draft',
           ID: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER }
         },
@@ -98,9 +111,32 @@ export const conferencesRepository = {
 
   async update(id: number, data: Partial<Omit<ConferenceRow, 'ID' | 'CREATED_AT'>>) {
     return withConn(async (conn) => {
+      // Convert date strings to proper format for Oracle
+      const formatDate = (dateStr: string) => {
+        if (!dateStr) return null;
+        // If it's already in ISO format, convert to Oracle date format
+        if (dateStr.includes('T')) {
+          return new Date(dateStr);
+        }
+        // If it's in YYYY-MM-DD format, convert to Date object
+        return new Date(dateStr + 'T00:00:00.000Z');
+      };
+
       const fields: string[] = [];
       const binds: any = { id };
-      for (const key of Object.keys(data)) { fields.push(`${key} = :${key}`); binds[key] = (data as Record<string, any>)[key]; }
+      
+      for (const key of Object.keys(data)) { 
+        fields.push(`${key} = :${key}`); 
+        const value = (data as Record<string, any>)[key];
+        
+        // Handle date fields specifically
+        if (key === 'START_DATE' || key === 'END_DATE') {
+          binds[key] = formatDate(value);
+        } else {
+          binds[key] = value;
+        }
+      }
+      
       if (fields.length === 0) return this.findById(id);
       await conn.execute(`UPDATE CONFERENCES SET ${fields.join(', ')} WHERE ID = :id`, binds, { autoCommit: true });
       return this.findById(id);
