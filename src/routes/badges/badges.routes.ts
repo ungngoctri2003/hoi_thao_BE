@@ -5,8 +5,9 @@ import { getBadges, evaluateBadges } from '../../modules/badges/badges.controlle
 
 export const badgesRouter = Router();
 
-badgesRouter.get('/badges/attendees/:id', auth(), rbac('conferences.read'), getBadges);
-badgesRouter.post('/badges/attendees/:id/evaluate', auth(), rbac('conferences.read'), evaluateBadges);
+badgesRouter.get('/badges/attendees/:id', auth(), rbac('conferences.view'), getBadges);
+badgesRouter.post('/badges/attendees/:id/evaluate', auth(), rbac('conferences.view'), evaluateBadges);
+
 
 
 

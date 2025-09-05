@@ -8,15 +8,15 @@ import { usersRepository } from '../../modules/users/users.repository';
 
 export const rolesRouter = Router();
 
-rolesRouter.get('/', auth(), rbac('roles.admin'), async (_req, res, next) => {
+rolesRouter.get('/', auth(), rbac('roles.manage'), async (_req, res, next) => {
   try { res.json({ data: await rolesRepository.list() }); } catch (e) { next(e); }
 });
 
-rolesRouter.post('/', auth(), rbac('roles.admin'), async (req, res, next) => {
+rolesRouter.post('/', auth(), rbac('roles.manage'), async (req, res, next) => {
   try { const id = await rolesRepository.create(req.body.code, req.body.name); res.status(201).json({ data: { id } }); } catch (e) { next(e); }
 });
 
-rolesRouter.post('/:id/permissions', auth(), rbac('roles.admin'), async (req, res, next) => {
+rolesRouter.post('/:id/permissions', auth(), rbac('roles.manage'), async (req, res, next) => {
   try { 
     await rolesRepository.assignPermission(Number(req.params.id), req.body.permissionId); 
     
@@ -34,7 +34,7 @@ rolesRouter.post('/:id/permissions', auth(), rbac('roles.admin'), async (req, re
     res.status(204).send(); 
   } catch (e) { next(e); }
 });
-rolesRouter.delete('/:id/permissions/:permId', auth(), rbac('roles.admin'), async (req, res, next) => {
+rolesRouter.delete('/:id/permissions/:permId', auth(), rbac('roles.manage'), async (req, res, next) => {
   try { 
     await rolesRepository.removePermission(Number(req.params.id), Number(req.params.permId)); 
     
@@ -53,11 +53,11 @@ rolesRouter.delete('/:id/permissions/:permId', auth(), rbac('roles.admin'), asyn
   } catch (e) { next(e); }
 });
 
-rolesRouter.get('/:id/permissions', auth(), rbac('roles.admin'), async (req, res, next) => {
+rolesRouter.get('/:id/permissions', auth(), rbac('roles.manage'), async (req, res, next) => {
   try { res.json({ data: await rolesRepository.getPermissions(Number(req.params.id)) }); } catch (e) { next(e); }
 });
 
-rolesRouter.patch('/:id', auth(), rbac('roles.admin'), async (req, res, next) => {
+rolesRouter.patch('/:id', auth(), rbac('roles.manage'), async (req, res, next) => {
   try { 
     await rolesRepository.update(Number(req.params.id), req.body.code, req.body.name); 
     // Return the updated role data
@@ -66,7 +66,7 @@ rolesRouter.patch('/:id', auth(), rbac('roles.admin'), async (req, res, next) =>
   } catch (e) { next(e); }
 });
 
-rolesRouter.delete('/:id', auth(), rbac('roles.admin'), async (req, res, next) => {
+rolesRouter.delete('/:id', auth(), rbac('roles.manage'), async (req, res, next) => {
   try { await rolesRepository.delete(Number(req.params.id)); res.status(204).send(); } catch (e) { next(e); }
 });
 

@@ -9,14 +9,14 @@ export const usersRouter = Router();
 usersRouter.get('/me', auth(), me);
 usersRouter.patch('/me', auth(), updateMe);
 usersRouter.get('/me/refresh-permissions', auth(), refreshPermissions);
-usersRouter.get('/', auth(), rbac('roles.admin'), list);
-usersRouter.post('/', auth(), rbac('roles.admin'), audit('user', 'create', 'user'), create);
-usersRouter.get('/:id', auth(), rbac('roles.admin'), getById);
-usersRouter.patch('/:id', auth(), rbac('roles.admin'), audit('user', 'update', 'user'), update);
-usersRouter.delete('/:id', auth(), rbac('roles.admin'), audit('user', 'delete', 'user'), remove);
-usersRouter.get('/:id/roles', auth(), rbac('roles.admin'), listRoles);
-usersRouter.post('/:id/roles', auth(), rbac('roles.admin'), audit('user', 'assign-role', 'user'), assignRole);
-usersRouter.delete('/:id/roles/:roleId', auth(), rbac('roles.admin'), audit('user', 'remove-role', 'user'), removeRole);
+usersRouter.get('/', auth(), rbac('roles.manage'), list);
+usersRouter.post('/', auth(), rbac('roles.manage'), audit('user', 'create', 'user'), create);
+usersRouter.get('/:id', auth(), rbac('roles.manage'), getById);
+usersRouter.patch('/:id', auth(), rbac('roles.manage'), audit('user', 'update', 'user'), update);
+usersRouter.delete('/:id', auth(), rbac('roles.manage'), audit('user', 'delete', 'user'), remove);
+usersRouter.get('/:id/roles', auth(), rbac('roles.manage'), listRoles);
+usersRouter.post('/:id/roles', auth(), rbac('roles.manage'), audit('user', 'assign-role', 'user'), assignRole);
+usersRouter.delete('/:id/roles/:roleId', auth(), rbac('roles.manage'), audit('user', 'remove-role', 'user'), removeRole);
 
 
 

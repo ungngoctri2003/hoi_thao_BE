@@ -5,8 +5,9 @@ import { getSettings, updateSettings } from '../../modules/settings/settings.con
 
 export const settingsRouter = Router();
 
-settingsRouter.get('/settings', auth(), rbac('roles.admin'), getSettings);
-settingsRouter.patch('/settings', auth(), rbac('roles.admin'), updateSettings);
+settingsRouter.get('/settings', auth(), rbac('roles.manage'), getSettings);
+settingsRouter.patch('/settings', auth(), rbac('roles.manage'), updateSettings);
+
 
 
 

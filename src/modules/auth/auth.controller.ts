@@ -45,7 +45,7 @@ export async function changePassword(req: Request, res: Response, next: NextFunc
     }
     
     await authService.changePassword(userId, req.body.currentPassword, req.body.newPassword);
-    res.json(ok({ changed: true }));
+    return res.json(ok({ changed: true }));
   } catch (e) { next(e); }
 }
 

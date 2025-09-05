@@ -5,11 +5,11 @@ import { permissionsRepository } from '../../modules/permissions/permissions.rep
 
 export const permissionsRouter = Router();
 
-permissionsRouter.get('/', auth(), rbac('roles.admin'), async (_req, res, next) => {
+permissionsRouter.get('/', auth(), rbac('roles.manage'), async (_req, res, next) => {
   try { res.json({ data: await permissionsRepository.list() }); } catch (e) { next(e); }
 });
 
-permissionsRouter.post('/', auth(), rbac('roles.admin'), async (req, res, next) => {
+permissionsRouter.post('/', auth(), rbac('roles.manage'), async (req, res, next) => {
   try { const id = await permissionsRepository.create(req.body.code, req.body.name, req.body.category, req.body.description); res.status(201).json({ data: { id } }); } catch (e) { next(e); }
 });
 

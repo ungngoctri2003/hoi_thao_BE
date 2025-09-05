@@ -9,6 +9,7 @@ type UserRow = {
   STATUS?: string | null;
   FIREBASE_UID?: string | null;
   AVATAR_URL?: string | null;
+  ROLE_CODE?: string | null;
 };
 
 export const usersRepository = {
@@ -47,6 +48,21 @@ export const usersRepository = {
       );
       const rows = (res.rows as any[]) || [];
       return (rows[0] as UserRow) || null;
+    });
+  },
+
+  async getUserRole(userId: number): Promise<{ role_code: string } | null> {
+    return withConn(async (conn) => {
+      const res = await conn.execute(
+        `SELECT r.CODE as role_code 
+         FROM USER_ROLES ur 
+         JOIN ROLES r ON ur.ROLE_ID = r.ID 
+         WHERE ur.USER_ID = :userId AND ROWNUM = 1`,
+        { userId },
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
+      );
+      const rows = (res.rows as any[]) || [];
+      return (rows[0] as { role_code: string }) || null;
     });
   },
   async findByEmail(email: string): Promise<UserRow | null> {

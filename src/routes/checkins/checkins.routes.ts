@@ -19,3 +19,6 @@ checkinsRouter.get('/', auth(), rbac('checkin.process'), list);
 
 
 
+
+
+

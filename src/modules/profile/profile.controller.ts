@@ -25,6 +25,7 @@ export async function getProfile(req: Request, res: Response, next: NextFunction
       // Add role information from req.user (set by auth middleware)
       if (user) {
         user.ROLE_CODE = req.user!.role;
+        user.permissions = req.user!.permissions || [];
       }
       
       return {
@@ -53,7 +54,7 @@ export async function updateProfile(req: Request, res: Response, next: NextFunct
     });
     
     // Determine user role from permissions
-    const isAdmin = permissions.includes('roles.admin');
+    const isAdmin = permissions.includes('roles.manage');
     const isStaff = permissions.includes('conferences.create') || permissions.includes('conferences.update');
     const isAttendee = !isAdmin && !isStaff;
     

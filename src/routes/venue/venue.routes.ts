@@ -7,7 +7,7 @@ import { roomsRepository } from '../../modules/venue/rooms.repository';
 
 export const venueRouter = Router();
 
-venueRouter.get('/conferences/:confId/floors', auth(), rbac('conferences.read'), async (req, res, next) => {
+venueRouter.get('/conferences/:confId/floors', auth(), rbac('conferences.view'), async (req, res, next) => {
   try { res.json({ data: await floorsRepository.list(Number(req.params.confId)) }); } catch (e) { next(e); }
 });
 venueRouter.post('/conferences/:confId/floors', auth(), rbac('conferences.write'), audit('conference', 'floor-create', 'floor'), async (req, res, next) => {
@@ -17,7 +17,7 @@ venueRouter.delete('/floors/:id', auth(), rbac('conferences.write'), audit('conf
   try { await floorsRepository.remove(Number(req.params.id)); res.status(204).send(); } catch (e) { next(e); }
 });
 
-venueRouter.get('/floors/:floorId/rooms', auth(), rbac('conferences.read'), async (req, res, next) => {
+venueRouter.get('/floors/:floorId/rooms', auth(), rbac('conferences.view'), async (req, res, next) => {
   try { res.json({ data: await roomsRepository.list(Number(req.params.floorId)) }); } catch (e) { next(e); }
 });
 venueRouter.post('/floors/:floorId/rooms', auth(), rbac('conferences.write'), audit('conference', 'room-create', 'room'), async (req, res, next) => {
@@ -26,6 +26,7 @@ venueRouter.post('/floors/:floorId/rooms', auth(), rbac('conferences.write'), au
 venueRouter.delete('/rooms/:id', auth(), rbac('conferences.write'), audit('conference', 'room-delete', 'room'), async (req, res, next) => {
   try { await roomsRepository.remove(Number(req.params.id)); res.status(204).send(); } catch (e) { next(e); }
 });
+
 
 
 

@@ -5,8 +5,9 @@ import { listBySession, create } from '../../modules/messages/messages.controlle
 
 export const messagesRouter = Router();
 
-messagesRouter.get('/sessions/:id/messages', auth(), rbac('conferences.read'), listBySession);
-messagesRouter.post('/sessions/:id/messages', auth(), rbac('conferences.read'), create);
+messagesRouter.get('/sessions/:id/messages', auth(), rbac('conferences.view'), listBySession);
+messagesRouter.post('/sessions/:id/messages', auth(), rbac('conferences.view'), create);
+
 
 
 

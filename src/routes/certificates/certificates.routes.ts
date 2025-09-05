@@ -5,7 +5,8 @@ import { generateCertificate } from '../../modules/certificates/certificates.con
 
 export const certificatesRouter = Router();
 
-certificatesRouter.post('/certificates/generate', auth(), rbac('conferences.read'), generateCertificate);
+certificatesRouter.post('/certificates/generate', auth(), rbac('conferences.view'), generateCertificate);
+
 
 
 
