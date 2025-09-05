@@ -22,10 +22,16 @@ import { healthRouter } from './health/health.routes';
 import { uploadRouter } from './upload/upload.routes';
 import notificationsRouter from './notifications/notifications.routes';
 import { userConferenceAssignmentsRouter } from './user-conference-assignments/user-conference-assignments.routes';
+import { publicRouter } from './public/public.routes';
 
 export const router = Router();
 
 router.get('/ping', (_req, res) => res.json({ data: 'pong' }));
+
+// Public routes (no authentication required)
+router.use('/public', publicRouter);
+
+// Protected routes (authentication required)
 router.use('/auth', authRouter);
 router.use('/audit', auditRouter);
 router.use('/attendees', attendeesRouter);

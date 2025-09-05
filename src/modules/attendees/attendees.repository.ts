@@ -142,6 +142,37 @@ export const attendeesRepository = {
       );
       return (res.rows as any[]) || [];
     });
+  },
+
+  async findByQRCodeAndConference(qrCode: string, conferenceId: number): Promise<AttendeeRow | null> {
+    return withConn(async (conn) => {
+      const res = await conn.execute(
+        `SELECT a.ID, a.NAME, a.EMAIL, a.PHONE, a.COMPANY, a.POSITION, a.AVATAR_URL, a.DIETARY, a.SPECIAL_NEEDS, a.DATE_OF_BIRTH, a.GENDER, a.CREATED_AT
+         FROM ATTENDEES a
+         INNER JOIN REGISTRATIONS r ON a.ID = r.ATTENDEE_ID
+         WHERE r.QR_CODE = :qrCode AND r.CONFERENCE_ID = :conferenceId`,
+        { qrCode, conferenceId },
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
+      );
+      const rows = (res.rows as any[]) || [];
+      return (rows[0] as AttendeeRow) || null;
+    });
+  },
+
+  async searchByQuery(query: string, conferenceId: number) {
+    return withConn(async (conn) => {
+      const res = await conn.execute(
+        `SELECT a.ID, a.NAME, a.EMAIL, a.PHONE, a.COMPANY, a.POSITION, a.AVATAR_URL, a.DIETARY, a.SPECIAL_NEEDS, a.DATE_OF_BIRTH, a.GENDER, a.CREATED_AT, r.QR_CODE, r.STATUS as REGISTRATION_STATUS
+         FROM ATTENDEES a
+         INNER JOIN REGISTRATIONS r ON a.ID = r.ATTENDEE_ID
+         WHERE r.CONFERENCE_ID = :conferenceId
+         AND (LOWER(a.NAME) LIKE :q OR LOWER(a.EMAIL) LIKE :q OR LOWER(a.PHONE) LIKE :q OR LOWER(r.QR_CODE) LIKE :q)
+         ORDER BY a.CREATED_AT DESC`,
+        { q: `%${query.toLowerCase()}%`, conferenceId },
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
+      );
+      return (res.rows as any[]) || [];
+    });
   }
 };
 
