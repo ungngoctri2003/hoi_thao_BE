@@ -54,6 +54,56 @@ export async function remove(req: Request, res: Response, next: NextFunction) {
   }
 }
 
+export async function checkin(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const registrationId = Number(req.params.id);
+    
+    // Check if registration exists
+    const registration = await registrationsRepository.findById(registrationId);
+    if (!registration) {
+      res.status(404).json({ 
+        error: { 
+          code: 'NOT_FOUND', 
+          message: 'Registration not found' 
+        } 
+      });
+      return;
+    }
+
+    // Update registration status to checked-in
+    const updatedRegistration = await registrationsRepository.update(registrationId, 'checked-in');
+    
+    res.json(ok(updatedRegistration));
+  } catch (e) { 
+    next(e); 
+  }
+}
+
+export async function checkout(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const registrationId = Number(req.params.id);
+    
+    // Check if registration exists
+    const registration = await registrationsRepository.findById(registrationId);
+    if (!registration) {
+      res.status(404).json({ 
+        error: { 
+          code: 'NOT_FOUND', 
+          message: 'Registration not found' 
+        } 
+      });
+      return;
+    }
+
+    // Update registration status to checked-out
+    const updatedRegistration = await registrationsRepository.update(registrationId, 'checked-out');
+    
+    res.json(ok(updatedRegistration));
+  } catch (e) { 
+    next(e); 
+  }
+}
+
 export async function publicRegistration(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const { 

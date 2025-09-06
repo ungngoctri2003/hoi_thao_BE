@@ -7,7 +7,7 @@ export type RegistrationRow = {
   ATTENDEE_ID: number;
   CONFERENCE_ID: number;
   REGISTRATION_DATE: Date;
-  STATUS: 'registered' | 'checked-in' | 'cancelled' | 'no-show';
+  STATUS: 'registered' | 'checked-in' | 'checked-out' | 'cancelled' | 'no-show';
   QR_CODE: string | null;
 };
 

@@ -81,11 +81,32 @@ export const attendeesRepository = {
 
   async create(data: Omit<AttendeeRow, 'ID' | 'CREATED_AT'>): Promise<AttendeeRow> {
     return withConn(async (conn) => {
+      // Prepare data with proper type handling for Oracle
+      const processedData: any = {};
+      
+      for (const [key, value] of Object.entries(data)) {
+        if (value !== undefined && value !== null) {
+          if (key === 'DATE_OF_BIRTH') {
+            processedData[key] = new Date(value);
+          } else if (typeof value === 'string') {
+            processedData[key] = String(value);
+          } else if (typeof value === 'boolean') {
+            processedData[key] = value ? '1' : '0';
+          } else {
+            processedData[key] = value;
+          }
+        } else {
+          processedData[key] = null;
+        }
+      }
+      
+      console.log('Create data:', processedData);
+      
       const res = await conn.execute(
         `INSERT INTO ATTENDEES (NAME, EMAIL, PHONE, COMPANY, POSITION, AVATAR_URL, DIETARY, SPECIAL_NEEDS, DATE_OF_BIRTH, GENDER, FIREBASE_UID)
          VALUES (:NAME, :EMAIL, :PHONE, :COMPANY, :POSITION, :AVATAR_URL, :DIETARY, :SPECIAL_NEEDS, :DATE_OF_BIRTH, :GENDER, :FIREBASE_UID)
          RETURNING ID INTO :ID`,
-        { ...data, ID: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER } },
+        { ...processedData, ID: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER } },
         { autoCommit: true }
       );
       const id = (res.outBinds as { ID: number[] }).ID[0];
@@ -107,11 +128,64 @@ export const attendeesRepository = {
     return withConn(async (conn) => {
       const fields: string[] = [];
       const binds: any = { id };
+      
+      // Define valid fields for ATTENDEES table
+      const validFields = [
+        'NAME', 'EMAIL', 'PHONE', 'COMPANY', 'POSITION', 'AVATAR_URL', 
+        'DIETARY', 'SPECIAL_NEEDS', 'DATE_OF_BIRTH', 'GENDER', 'FIREBASE_UID'
+      ];
+      
       for (const key of Object.keys(data)) {
-        fields.push(`${key} = :${key}`);
-        (binds as Record<string, any>)[key] = (data as Record<string, any>)[key];
+        // Skip invalid fields that don't exist in ATTENDEES table
+        if (!validFields.includes(key)) {
+          console.warn(`Skipping invalid field for ATTENDEES table: ${key}`);
+          continue;
+        }
+        
+        const value = (data as Record<string, any>)[key];
+        if (value !== undefined && value !== null) {
+          fields.push(`${key} = :${key}`);
+          
+          // Handle different data types for Oracle with proper type conversion
+          if (key === 'DATE_OF_BIRTH') {
+            // Convert to proper Date object for Oracle
+            if (value instanceof Date) {
+              (binds as Record<string, any>)[key] = value;
+            } else if (typeof value === 'string') {
+              (binds as Record<string, any>)[key] = new Date(value);
+            } else {
+              (binds as Record<string, any>)[key] = new Date(value);
+            }
+          } else if (key === 'ID' || key === 'ATTENDEE_ID' || key === 'CONFERENCE_ID') {
+            // Ensure numbers are properly typed and not NaN
+            const numValue = Number(value);
+            if (isNaN(numValue)) {
+              console.warn(`Invalid number value for ${key}:`, value);
+              continue; // Skip this field if it's not a valid number
+            }
+            (binds as Record<string, any>)[key] = numValue;
+          } else if (typeof value === 'string') {
+            // Ensure strings are properly handled and not empty if required
+            (binds as Record<string, any>)[key] = String(value).trim();
+          } else if (typeof value === 'boolean') {
+            // Convert boolean to number for Oracle (0 or 1)
+            (binds as Record<string, any>)[key] = value ? 1 : 0;
+          } else if (value === null) {
+            // Handle null values explicitly
+            (binds as Record<string, any>)[key] = null;
+          } else {
+            // For any other type, convert to string as fallback
+            (binds as Record<string, any>)[key] = String(value);
+          }
+        }
       }
+      
       if (fields.length === 0) return this.findById(id);
+      
+      console.log('Update query:', `UPDATE ATTENDEES SET ${fields.join(', ')} WHERE ID = :id`);
+      console.log('Bind parameters:', JSON.stringify(binds, null, 2));
+      console.log('Bind parameter types:', Object.keys(binds).map(key => `${key}: ${typeof binds[key]}`));
+      
       await conn.execute(
         `UPDATE ATTENDEES SET ${fields.join(', ')} WHERE ID = :id`,
         binds,

@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { attendeesRepository } from './attendees.repository';
+import { registrationsRepository } from '../registrations/registrations.repository';
 import { parsePagination, meta } from '../../utils/pagination';
 import { ok } from '../../utils/responses';
 import { audit } from '../../middlewares/audit';
@@ -76,6 +77,35 @@ export async function updateMe(req: Request, res: Response, next: NextFunction) 
     const updatedAttendee = await attendeesRepository.update(attendee.ID, req.body);
     res.json(ok(updatedAttendee));
   } catch (e) { next(e); }
+}
+
+export async function createRegistration(req: Request, res: Response, next: NextFunction) {
+  try {
+    const attendeeId = Number(req.params.id);
+    const { conferenceId } = req.body;
+    
+    if (!conferenceId) {
+      res.status(400).json({ error: { code: 'MISSING_CONFERENCE_ID', message: 'Conference ID is required' } });
+      return;
+    }
+    
+    // Check if attendee exists
+    const attendee = await attendeesRepository.findById(attendeeId);
+    if (!attendee) {
+      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Attendee not found' } });
+      return;
+    }
+    
+    // Create registration
+    const registration = await registrationsRepository.create({
+      ATTENDEE_ID: attendeeId,
+      CONFERENCE_ID: conferenceId
+    });
+    
+    res.status(201).json(ok(registration));
+  } catch (e) { 
+    next(e); 
+  }
 }
 
 
