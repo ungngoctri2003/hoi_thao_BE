@@ -66,6 +66,8 @@ export const registrationsRepository = {
             { ...data, QR_CODE: qr, ID: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER } }
           );
           const id = (res.outBinds as { ID: number[] }).ID[0];
+          if (!id) throw new Error('Failed to get created registration ID');
+          
           const created = await conn.execute(
             `SELECT ID, ATTENDEE_ID, CONFERENCE_ID, REGISTRATION_DATE, STATUS, QR_CODE FROM REGISTRATIONS WHERE ID = :id`,
             { id },

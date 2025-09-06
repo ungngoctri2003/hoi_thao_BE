@@ -41,11 +41,24 @@ export const checkinsRepository = {
 
   async manual(registrationId: number) {
     return withTransaction(async (conn) => {
-      const res = await conn.execute(
-        `INSERT INTO CHECKINS (REGISTRATION_ID, METHOD, STATUS) VALUES (:regId, 'manual', 'success') RETURNING ID INTO :ID`,
-        { regId: registrationId, ID: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER } }
+      // Check for recent check-in (within 1 day)
+      const recent = await conn.execute(
+        `SELECT ID FROM CHECKINS WHERE REGISTRATION_ID = :regId AND CHECKIN_TIME > SYSTIMESTAMP - INTERVAL '1' DAY ORDER BY CHECKIN_TIME DESC FETCH FIRST 1 ROWS ONLY`,
+        { regId: registrationId },
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
-      await conn.execute(`UPDATE REGISTRATIONS SET STATUS = 'checked-in' WHERE ID = :id`, { id: registrationId });
+      const isDup = (recent.rows as any[]).length > 0;
+      const status = isDup ? 'duplicate' : 'success';
+      
+      const res = await conn.execute(
+        `INSERT INTO CHECKINS (REGISTRATION_ID, METHOD, STATUS) VALUES (:regId, 'manual', :status) RETURNING ID INTO :ID`,
+        { regId: registrationId, status, ID: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER } }
+      );
+      
+      if (!isDup) {
+        await conn.execute(`UPDATE REGISTRATIONS SET STATUS = 'checked-in' WHERE ID = :id`, { id: registrationId });
+      }
+      
       const id = (res.outBinds as { ID: number[] }).ID[0];
       const row = await conn.execute(
         `SELECT ID, REGISTRATION_ID, CHECKIN_TIME, METHOD, STATUS FROM CHECKINS WHERE ID = :id`,
@@ -66,8 +79,14 @@ export const checkinsRepository = {
       const listRes = await conn.execute(
         `SELECT * FROM (
            SELECT t.*, ROWNUM rn FROM (
-             SELECT c.ID, c.REGISTRATION_ID, c.CHECKIN_TIME, c.METHOD, c.STATUS
-             FROM CHECKINS c JOIN REGISTRATIONS r ON r.ID = c.REGISTRATION_ID WHERE ${where} ORDER BY c.CHECKIN_TIME DESC
+             SELECT c.ID, c.REGISTRATION_ID, c.CHECKIN_TIME, c.METHOD, c.STATUS,
+                    a.NAME as ATTENDEE_NAME, a.EMAIL as ATTENDEE_EMAIL, a.PHONE as ATTENDEE_PHONE,
+                    reg.QR_CODE, r.CONFERENCE_ID
+             FROM CHECKINS c 
+             JOIN REGISTRATIONS r ON r.ID = c.REGISTRATION_ID 
+             JOIN ATTENDEES a ON a.ID = r.ATTENDEE_ID
+             LEFT JOIN REGISTRATIONS reg ON reg.ID = c.REGISTRATION_ID
+             WHERE ${where} ORDER BY c.CHECKIN_TIME DESC
            ) t WHERE ROWNUM <= :maxRow
          ) WHERE rn > :minRow`,
         { ...binds, maxRow: offset + limit, minRow: offset },
@@ -81,6 +100,60 @@ export const checkinsRepository = {
       const rows = (listRes.rows as any[]) || [];
       const total = Number((countRes.rows as Array<{CNT: number}>)[0]?.CNT || 0);
       return { rows: rows as CheckinRow[], total };
+    });
+  },
+
+  async verifyQrForDelete(checkInId: number, qrCode: string) {
+    return withTransaction(async (conn) => {
+      const result = await conn.execute(
+        `SELECT c.ID, r.QR_CODE 
+         FROM CHECKINS c
+         JOIN REGISTRATIONS r ON r.ID = c.REGISTRATION_ID
+         WHERE c.ID = :checkInId`,
+        { checkInId },
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
+      );
+      
+      const checkin = (result.rows as any[])[0];
+      if (!checkin) {
+        return { valid: false, message: 'Check-in record not found' };
+      }
+      
+      if (checkin.QR_CODE !== qrCode) {
+        return { valid: false, message: 'QR code does not match' };
+      }
+      
+      return { valid: true, message: 'QR code verified' };
+    });
+  },
+
+  async delete(id: number) {
+    return withTransaction(async (conn) => {
+      // First get the check-in record to find the registration ID
+      const checkinRes = await conn.execute(
+        `SELECT REGISTRATION_ID FROM CHECKINS WHERE ID = :id`,
+        { id },
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
+      );
+      
+      const checkin = (checkinRes.rows as any[])[0];
+      if (!checkin) {
+        throw Object.assign(new Error('Check-in record not found'), { status: 404 });
+      }
+      
+      // Delete the check-in record
+      await conn.execute(
+        `DELETE FROM CHECKINS WHERE ID = :id`,
+        { id }
+      );
+      
+      // Update registration status back to 'registered'
+      await conn.execute(
+        `UPDATE REGISTRATIONS SET STATUS = 'registered' WHERE ID = :regId`,
+        { regId: checkin.REGISTRATION_ID }
+      );
+      
+      return { success: true, message: 'Check-in record deleted successfully' };
     });
   }
 };

@@ -90,8 +90,16 @@ export const attendeesRepository = {
       );
       const id = (res.outBinds as { ID: number[] }).ID[0];
       if (!id) throw new Error('Failed to get created ID');
-      const created = await this.findById(id);
-      return created as AttendeeRow;
+      
+      // Return the created attendee data directly instead of making another query
+      const created = await conn.execute(
+        `SELECT ID, NAME, EMAIL, PHONE, COMPANY, POSITION, AVATAR_URL, DIETARY, SPECIAL_NEEDS, DATE_OF_BIRTH, GENDER, CREATED_AT
+         FROM ATTENDEES WHERE ID = :id`,
+        { id },
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
+      );
+      const rows = (created.rows as any[]) || [];
+      return (rows[0] as AttendeeRow);
     });
   },
 
@@ -165,8 +173,10 @@ export const attendeesRepository = {
         `SELECT a.ID, a.NAME, a.EMAIL, a.PHONE, a.COMPANY, a.POSITION, a.AVATAR_URL, a.DIETARY, a.SPECIAL_NEEDS, a.DATE_OF_BIRTH, a.GENDER, a.CREATED_AT, r.QR_CODE, r.STATUS as REGISTRATION_STATUS
          FROM ATTENDEES a
          INNER JOIN REGISTRATIONS r ON a.ID = r.ATTENDEE_ID
+         LEFT JOIN CHECKINS c ON c.REGISTRATION_ID = r.ID AND c.STATUS = 'success'
          WHERE r.CONFERENCE_ID = :conferenceId
-         AND (LOWER(a.NAME) LIKE :q OR LOWER(a.EMAIL) LIKE :q OR LOWER(a.PHONE) LIKE :q OR LOWER(r.QR_CODE) LIKE :q)
+         AND c.ID IS NULL
+         AND (LOWER(a.NAME) LIKE :q OR LOWER(a.EMAIL) LIKE :q OR LOWER(a.PHONE) LIKE :q)
          ORDER BY a.CREATED_AT DESC`,
         { q: `%${query.toLowerCase()}%`, conferenceId },
         { outFormat: oracledb.OUT_FORMAT_OBJECT }
