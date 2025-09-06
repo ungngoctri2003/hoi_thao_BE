@@ -42,7 +42,10 @@ export const usersRepository = {
   async findById(id: number): Promise<UserRow | null> {
     return withConn(async (conn) => {
       const res = await conn.execute(
-        `SELECT ID, EMAIL, NAME, PASSWORD_HASH, STATUS, FIREBASE_UID, AVATAR_URL FROM APP_USERS WHERE ID = :id`,
+        `SELECT u.ID, u.EMAIL, u.NAME, u.PASSWORD_HASH, u.STATUS, u.FIREBASE_UID, u.AVATAR_URL, 
+                (SELECT r.CODE FROM USER_ROLES ur2 JOIN ROLES r ON ur2.ROLE_ID = r.ID WHERE ur2.USER_ID = u.ID AND ROWNUM = 1) as ROLE_CODE
+         FROM APP_USERS u
+         WHERE u.ID = :id`,
         { id },
         { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );

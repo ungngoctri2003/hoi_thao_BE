@@ -47,8 +47,8 @@ export const auditRepository = {
       if (params.category) { where += ' AND CATEGORY = :category'; binds.category = params.category; }
       if (params.status) { where += ' AND STATUS = :status'; binds.status = params.status; }
       if (params.q) { where += ' AND (ACTION_NAME LIKE :q OR RESOURCE_NAME LIKE :q OR DETAILS LIKE :q)'; binds.q = `%${params.q}%`; }
-      if (params.from) { where += ' AND TS >= TO_TIMESTAMP(:from, \"YYYY-MM-DD\" )'; binds.from = params.from; }
-      if (params.to) { where += ' AND TS <= TO_TIMESTAMP(:to, \"YYYY-MM-DD\")'; binds.to = params.to; }
+      if (params.from) { where += ' AND TS >= TO_TIMESTAMP(:from, \"YYYY-MM-DD\"T\"HH24:MI:SS.FF3\"Z\")'; binds.from = params.from; }
+      if (params.to) { where += ' AND TS <= TO_TIMESTAMP(:to, \"YYYY-MM-DD\"T\"HH24:MI:SS.FF3\"Z\")'; binds.to = params.to; }
 
       const listRes = await conn.execute(
         `SELECT * FROM (
