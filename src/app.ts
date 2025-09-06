@@ -26,8 +26,24 @@ app.use(helmet());
 app.use(cors(corsOptions));
 
 const windowMs = Number(process.env.RATE_LIMIT_WINDOW_MS || 60000);
-const max = Number(process.env.RATE_LIMIT_MAX || 100);
-app.use(rateLimit({ windowMs, max, standardHeaders: true, legacyHeaders: false }));
+const max = Number(process.env.RATE_LIMIT_MAX || 300); // Increased from 100 to 300 requests per minute
+app.use(rateLimit({ 
+  windowMs, 
+  max, 
+  standardHeaders: true, 
+  legacyHeaders: false,
+  message: {
+    error: {
+      code: 'RATE_LIMIT_EXCEEDED',
+      message: 'Too many requests, please try again later.',
+      retryAfter: Math.ceil(windowMs / 1000)
+    }
+  },
+  skip: (req) => {
+    // Skip rate limiting for health checks
+    return req.path === '/healthz' || req.path === '/healthz/db';
+  }
+}));
 
 app.use(metricsMiddleware());
 

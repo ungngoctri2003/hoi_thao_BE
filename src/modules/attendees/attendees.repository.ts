@@ -81,10 +81,22 @@ export const attendeesRepository = {
 
   async create(data: Omit<AttendeeRow, 'ID' | 'CREATED_AT'>): Promise<AttendeeRow> {
     return withConn(async (conn) => {
+      // Define valid fields for ATTENDEES table
+      const validFields = [
+        'NAME', 'EMAIL', 'PHONE', 'COMPANY', 'POSITION', 'AVATAR_URL', 
+        'DIETARY', 'SPECIAL_NEEDS', 'DATE_OF_BIRTH', 'GENDER', 'FIREBASE_UID'
+      ];
+      
       // Prepare data with proper type handling for Oracle
       const processedData: any = {};
       
       for (const [key, value] of Object.entries(data)) {
+        // Skip invalid fields that don't exist in ATTENDEES table
+        if (!validFields.includes(key)) {
+          console.warn(`Skipping invalid field for ATTENDEES table: ${key}`);
+          continue;
+        }
+        
         if (value !== undefined && value !== null) {
           if (key === 'DATE_OF_BIRTH') {
             processedData[key] = new Date(value);
