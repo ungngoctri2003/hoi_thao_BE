@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { authRouter } from './auth';
 import { initPool } from '../config/db';
 import { auditRouter } from './audit';
+import { frontendAuditRouter } from './audit/frontend-audit.routes';
 import { attendeesRouter } from './attendees';
 import { rolesRouter } from './roles';
 import { permissionsRouter } from './permissions';
@@ -34,6 +35,7 @@ router.use('/public', publicRouter);
 // Protected routes (authentication required)
 router.use('/auth', authRouter);
 router.use('/audit', auditRouter);
+router.use('/audit/frontend', frontendAuditRouter);
 router.use('/attendees', attendeesRouter);
 router.use('/roles', rolesRouter);
 router.use('/permissions', permissionsRouter);

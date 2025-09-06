@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { auditRepository } from '../modules/audit/audit.repository';
 
-export function audit(category: 'auth' | 'user' | 'conference' | 'system' | 'data', action: string, resource?: string) {
+export function audit(category: 'auth' | 'user' | 'conference' | 'system' | 'data' | 'frontend', action: string, resource?: string) {
   return async (req: Request, res: Response, next: NextFunction) => {
     const start = Date.now();
     res.on('finish', async () => {
