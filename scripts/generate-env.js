@@ -111,6 +111,51 @@ function updateJWTSecrets() {
   console.log('🔑 JWT_REFRESH_SECRET:', refreshSecret.substring(0, 8) + '...');
 }
 
+/**
+ * Kiểm tra và tự động cập nhật JWT secrets nếu chúng không an toàn
+ */
+function checkAndUpdateUnsafeSecrets() {
+  const envPath = path.join(__dirname, '..', '.env');
+  
+  if (!fs.existsSync(envPath)) {
+    console.log('❌ File .env không tồn tại. Chạy ensureEnvFile() trước.');
+    return false;
+  }
+  
+  // Đọc file .env hiện tại
+  const envContent = fs.readFileSync(envPath, 'utf8');
+  
+  // Kiểm tra xem có JWT secrets không an toàn không
+  const hasUnsafeAccessSecret = envContent.includes('JWT_ACCESS_SECRET=your_super_secret_access_key_here_change_in_production');
+  const hasUnsafeRefreshSecret = envContent.includes('JWT_REFRESH_SECRET=your_super_secret_refresh_key_here_change_in_production');
+  
+  if (hasUnsafeAccessSecret || hasUnsafeRefreshSecret) {
+    console.log('⚠️  Phát hiện JWT secrets không an toàn!');
+    console.log('🔄 Tự động cập nhật JWT secrets...');
+    updateJWTSecrets();
+    return true;
+  }
+  
+  console.log('✅ JWT secrets đã an toàn');
+  return false;
+}
+
+/**
+ * Tự động cập nhật JWT secrets mỗi khi khởi động ứng dụng
+ */
+function autoUpdateJWTSecrets() {
+  console.log('🔍 Kiểm tra JWT secrets...');
+  
+  // Kiểm tra và cập nhật nếu cần
+  const wasUpdated = checkAndUpdateUnsafeSecrets();
+  
+  if (wasUpdated) {
+    console.log('🔄 JWT secrets đã được cập nhật tự động');
+  } else {
+    console.log('✅ JWT secrets đã sẵn sàng');
+  }
+}
+
 // Chạy script
 if (require.main === module) {
   const command = process.argv[2];
@@ -118,6 +163,12 @@ if (require.main === module) {
   switch (command) {
     case 'update':
       updateJWTSecrets();
+      break;
+    case 'check':
+      checkAndUpdateUnsafeSecrets();
+      break;
+    case 'auto':
+      autoUpdateJWTSecrets();
       break;
     case 'ensure':
     default:
@@ -130,5 +181,7 @@ module.exports = {
   generateJWTSecrets,
   createEnvContent,
   ensureEnvFile,
-  updateJWTSecrets
+  updateJWTSecrets,
+  checkAndUpdateUnsafeSecrets,
+  autoUpdateJWTSecrets
 };

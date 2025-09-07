@@ -1,8 +1,11 @@
 import dotenv from 'dotenv';
-const { ensureEnvFile } = require('../../scripts/generate-env');
+const { ensureEnvFile, autoUpdateJWTSecrets } = require('../../scripts/generate-env');
 
 // Đảm bảo file .env tồn tại trước khi load
 ensureEnvFile();
+
+// Tự động kiểm tra và cập nhật JWT secrets nếu cần
+autoUpdateJWTSecrets();
 
 dotenv.config();
 
