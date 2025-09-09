@@ -28,7 +28,8 @@ export function initSocket(server: HttpServer) {
       logger.error({ error }, 'Socket connection error');
     });
 
-    messagesNs.on('connection', (socket) => {
+    if (messagesNs) {
+      messagesNs.on('connection', (socket) => {
       logger.info({ socketId: socket.id }, 'User connected to main namespace');
       
       socket.on('join', (room: string) => {
@@ -44,7 +45,8 @@ export function initSocket(server: HttpServer) {
       socket.on('disconnect', () => {
         logger.info({ socketId: socket.id }, 'User disconnected from main namespace');
       });
-    });
+      });
+    }
 
     analyticsNs.on('connection', (socket) => {
       logger.info({ socketId: socket.id }, 'User connected to analytics namespace');

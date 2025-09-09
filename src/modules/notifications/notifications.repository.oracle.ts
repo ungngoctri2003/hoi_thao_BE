@@ -37,10 +37,20 @@ export class NotificationsRepository {
         const result = await conn.execute(query, bindParams, { autoCommit: true });
         const notificationId = (result.outBinds as { id: number[] }).id[0];
         
-        // Log the notification creation
-        await this.logNotification(notificationId, data.user_id, 'in_app', 'sent');
+        if (!notificationId) {
+          throw new Error('Failed to get notification ID');
+        }
         
-        return await this.findById(notificationId);
+        // Log the notification creation
+        if (data.user_id) {
+          await this.logNotification(notificationId, data.user_id, 'in_app', 'sent');
+        }
+        
+        const notification = await this.findById(notificationId);
+        if (!notification) {
+          throw new Error('Failed to retrieve created notification');
+        }
+        return notification;
       } catch (error) {
         logger.error({ error, data }, 'Failed to create notification');
         throw error;
@@ -300,7 +310,7 @@ export class NotificationsRepository {
   // Update user notification preferences
   async updatePreferences(userId: number, preferences: Partial<NotificationPreference>): Promise<NotificationPreference> {
     return withConn(async (conn) => {
-      const fields = [];
+      const fields: string[] = [];
       const bindParams: any = { userId };
 
       Object.entries(preferences).forEach(([key, value]) => {

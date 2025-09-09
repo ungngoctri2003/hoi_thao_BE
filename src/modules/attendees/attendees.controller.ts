@@ -108,6 +108,15 @@ export async function createRegistration(req: Request, res: Response, next: Next
   }
 }
 
+export async function listByConference(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { page, limit } = parsePagination(req.query);
+    const conferenceId = Number(req.params.conferenceId);
+    const { rows, total } = await attendeesRepository.listByConference(conferenceId, { page, limit });
+    res.json(ok(rows, meta(page, limit, total)));
+  } catch (e) { next(e); }
+}
+
 
 
 

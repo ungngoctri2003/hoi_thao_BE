@@ -24,6 +24,7 @@ import { uploadRouter } from './upload/upload.routes';
 import notificationsRouter from './notifications/notifications.routes';
 import { userConferenceAssignmentsRouter } from './user-conference-assignments/user-conference-assignments.routes';
 import { publicRouter } from './public/public.routes';
+import { testRouter } from './test/test.routes';
 
 export const router = Router();
 
@@ -56,6 +57,7 @@ router.use('/health', healthRouter);
 router.use('/upload', uploadRouter);
 router.use('/notifications', notificationsRouter);
 router.use('/user-conference-assignments', userConferenceAssignmentsRouter);
+router.use('/test', testRouter);
 
 router.post('/_init-db', async (_req, res) => {
   await initPool();

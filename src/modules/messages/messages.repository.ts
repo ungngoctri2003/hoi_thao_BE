@@ -31,7 +31,18 @@ export const messagesRepository = {
       );
       const rows = (listRes.rows as any[]) || [];
       const total = Number((countRes.rows as Array<{CNT: number}>)[0]?.CNT || 0);
-      return { rows: rows as MessageRow[], total };
+      
+      // Clean the rows to prevent circular references from Oracle objects
+      const cleanRows = rows.map(row => ({
+        ID: row.ID,
+        SESSION_ID: row.SESSION_ID,
+        ATTENDEE_ID: row.ATTENDEE_ID,
+        TS: row.TS,
+        TYPE: row.TYPE,
+        CONTENT: row.CONTENT
+      }));
+      
+      return { rows: cleanRows as MessageRow[], total };
     });
   },
 
@@ -48,7 +59,19 @@ export const messagesRepository = {
         { id },
         { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
-      return ((row.rows as any[])[0]) as MessageRow;
+      const rawRow = ((row.rows as any[])[0]);
+      
+      // Clean the row to prevent circular references from Oracle objects
+      const cleanRow = {
+        ID: rawRow.ID,
+        SESSION_ID: rawRow.SESSION_ID,
+        ATTENDEE_ID: rawRow.ATTENDEE_ID,
+        TS: rawRow.TS,
+        TYPE: rawRow.TYPE,
+        CONTENT: rawRow.CONTENT
+      };
+      
+      return cleanRow as MessageRow;
     });
   }
 };

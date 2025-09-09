@@ -14,7 +14,7 @@ export async function createFrontendAuditLog(req: Request, res: Response, next: 
       details,
       timestamp: timestamp || new Date().toISOString(),
       ipAddress: req.ip,
-      userAgent: req.headers['user-agent'] || null
+      userAgent: req.headers['user-agent'] || undefined
     });
 
     res.json(ok(log));

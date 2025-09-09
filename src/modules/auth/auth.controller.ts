@@ -37,16 +37,19 @@ export async function resetPassword(req: Request, res: Response, next: NextFunct
   } catch (e) { next(e); }
 }
 
-export async function changePassword(req: Request, res: Response, next: NextFunction) {
+export async function changePassword(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const userId = (req as any).user?.id; // Get user ID from JWT token
     if (!userId) {
-      return res.status(401).json({ success: false, message: 'Unauthorized' });
+      res.status(401).json({ success: false, message: 'Unauthorized' });
+      return;
     }
     
     await authService.changePassword(userId, req.body.currentPassword, req.body.newPassword);
-    return res.json(ok({ changed: true }));
-  } catch (e) { next(e); }
+    res.json(ok({ changed: true }));
+  } catch (e) { 
+    next(e); 
+  }
 }
 
 

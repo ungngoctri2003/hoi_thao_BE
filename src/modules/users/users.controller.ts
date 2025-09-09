@@ -66,6 +66,14 @@ export async function list(req: Request, res: Response, next: NextFunction) {
   } catch (e) { next(e); }
 }
 
+export async function listAllUsers(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { page, limit } = parsePagination(req.query);
+    const { rows, total } = await usersRepository.listAllUsers(page, limit);
+    res.json(ok(rows, meta(page, limit, total)));
+  } catch (e) { next(e); }
+}
+
 export async function getById(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const user = await usersRepository.findById(Number(req.params.id));
@@ -142,18 +150,18 @@ export async function update(req: Request, res: Response, next: NextFunction) {
           await usersRepository.assignRole(Number(req.params.id), role.ID);
           console.log(`Updated user ${req.params.id} role to ${req.body.role}`);
           
-          // Get updated permissions for the new role
-          const newPermissions = await usersRepository.getPermissions(Number(req.params.id));
-          console.log(`User ${req.params.id} now has ${newPermissions.length} permissions:`, newPermissions);
-          
-          // Emit WebSocket event to notify the user about role change
-          emitUserPermissionChange(Number(req.params.id), {
-            type: 'role_changed',
-            oldRole: updatedUser.ROLE_CODE || 'unknown',
-            newRole: req.body.role,
-            permissions: newPermissions,
-            timestamp: new Date().toISOString()
-          });
+        // Get updated permissions for the new role
+        const newPermissions = await usersRepository.getPermissions(Number(req.params.id));
+        console.log(`User ${req.params.id} now has ${newPermissions.length} permissions:`, newPermissions);
+        
+        // Emit WebSocket event to notify the user about role change
+        emitUserPermissionChange(Number(req.params.id), {
+          type: 'role_changed',
+          oldRole: 'unknown', // We don't have old role info here
+          newRole: req.body.role,
+          permissions: newPermissions,
+          timestamp: new Date().toISOString()
+        });
         } else {
           console.warn(`Role ${req.body.role} not found`);
         }

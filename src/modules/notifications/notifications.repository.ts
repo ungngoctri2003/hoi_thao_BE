@@ -80,204 +80,222 @@ export class NotificationsRepository {
 
   // Find notification by ID
   async findById(id: number): Promise<Notification | null> {
-    const query = `
-      SELECT * FROM notifications 
-      WHERE id = ? AND (expires_at IS NULL OR expires_at > NOW())
-    `;
-    
-    try {
-      const [rows] = await pool.execute(query, [id]);
-      const notifications = rows as Notification[];
-      return notifications.length > 0 ? notifications[0] : null;
-    } catch (error) {
-      logger.error({ error, id }, 'Failed to find notification by ID');
-      throw error;
-    }
+    return withConn(async (conn) => {
+      const query = `
+        SELECT * FROM notifications 
+        WHERE id = ? AND (expires_at IS NULL OR expires_at > NOW())
+      `;
+      
+      try {
+        const [rows] = await conn.execute(query, [id]);
+        const notifications = rows as Notification[];
+        return notifications.length > 0 ? notifications[0] : null;
+      } catch (error) {
+        logger.error({ error, id }, 'Failed to find notification by ID');
+        throw error;
+      }
+    });
   }
 
   // Get notifications for a user with filters
   async findByUserId(userId: number, filters: NotificationFilters = {}): Promise<Notification[]> {
-    let query = `
-      SELECT * FROM notifications 
-      WHERE user_id = ? AND (expires_at IS NULL OR expires_at > NOW())
-    `;
-    const values: any[] = [userId];
+    return withConn(async (conn) => {
+      let query = `
+        SELECT * FROM notifications 
+        WHERE user_id = ? AND (expires_at IS NULL OR expires_at > NOW())
+      `;
+      const values: any[] = [userId];
 
-    // Apply filters
-    if (filters.type) {
-      query += ' AND type = ?';
-      values.push(filters.type);
-    }
-
-    if (filters.category) {
-      query += ' AND category = ?';
-      values.push(filters.category);
-    }
-
-    if (filters.is_read !== undefined) {
-      query += ' AND is_read = ?';
-      values.push(filters.is_read);
-    }
-
-    if (filters.is_archived !== undefined) {
-      query += ' AND is_archived = ?';
-      values.push(filters.is_archived);
-    }
-
-    // Sorting
-    const sortBy = filters.sort_by || 'created_at';
-    const sortOrder = filters.sort_order || 'DESC';
-    query += ` ORDER BY ${sortBy} ${sortOrder}`;
-
-    // Pagination
-    if (filters.limit) {
-      query += ' LIMIT ?';
-      values.push(filters.limit);
-      
-      if (filters.offset) {
-        query += ' OFFSET ?';
-        values.push(filters.offset);
+      // Apply filters
+      if (filters.type) {
+        query += ' AND type = ?';
+        values.push(filters.type);
       }
-    }
 
-    try {
-      const [rows] = await pool.execute(query, values);
-      return rows as Notification[];
-    } catch (error) {
-      logger.error({ error, userId, filters }, 'Failed to find notifications by user ID');
-      throw error;
-    }
+      if (filters.category) {
+        query += ' AND category = ?';
+        values.push(filters.category);
+      }
+
+      if (filters.is_read !== undefined) {
+        query += ' AND is_read = ?';
+        values.push(filters.is_read);
+      }
+
+      if (filters.is_archived !== undefined) {
+        query += ' AND is_archived = ?';
+        values.push(filters.is_archived);
+      }
+
+      // Sorting
+      const sortBy = filters.sort_by || 'created_at';
+      const sortOrder = filters.sort_order || 'DESC';
+      query += ` ORDER BY ${sortBy} ${sortOrder}`;
+
+      // Pagination
+      if (filters.limit) {
+        query += ' LIMIT ?';
+        values.push(filters.limit);
+        
+        if (filters.offset) {
+          query += ' OFFSET ?';
+          values.push(filters.offset);
+        }
+      }
+
+      try {
+        const [rows] = await conn.execute(query, values);
+        return rows as Notification[];
+      } catch (error) {
+        logger.error({ error, userId, filters }, 'Failed to find notifications by user ID');
+        throw error;
+      }
+    });
   }
 
   // Mark notification as read
   async markAsRead(id: number, userId: number): Promise<boolean> {
-    const query = `
-      UPDATE notifications 
-      SET is_read = TRUE, updated_at = CURRENT_TIMESTAMP
-      WHERE id = ? AND user_id = ?
-    `;
+    return withConn(async (conn) => {
+      const query = `
+        UPDATE notifications 
+        SET is_read = TRUE, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ? AND user_id = ?
+      `;
 
-    try {
-      const [result] = await pool.execute(query, [id, userId]);
-      return (result as any).affectedRows > 0;
-    } catch (error) {
-      logger.error({ error, id, userId }, 'Failed to mark notification as read');
-      throw error;
-    }
+      try {
+        const [result] = await conn.execute(query, [id, userId]);
+        return (result as any).affectedRows > 0;
+      } catch (error) {
+        logger.error({ error, id, userId }, 'Failed to mark notification as read');
+        throw error;
+      }
+    });
   }
 
   // Mark all notifications as read for a user
   async markAllAsRead(userId: number): Promise<number> {
-    const query = `
-      UPDATE notifications 
-      SET is_read = TRUE, updated_at = CURRENT_TIMESTAMP
-      WHERE user_id = ? AND is_read = FALSE
-    `;
+    return withConn(async (conn) => {
+      const query = `
+        UPDATE notifications 
+        SET is_read = TRUE, updated_at = CURRENT_TIMESTAMP
+        WHERE user_id = ? AND is_read = FALSE
+      `;
 
-    try {
-      const [result] = await pool.execute(query, [userId]);
-      return (result as any).affectedRows;
-    } catch (error) {
-      logger.error({ error, userId }, 'Failed to mark all notifications as read');
-      throw error;
-    }
+      try {
+        const [result] = await conn.execute(query, [userId]);
+        return (result as any).affectedRows;
+      } catch (error) {
+        logger.error({ error, userId }, 'Failed to mark all notifications as read');
+        throw error;
+      }
+    });
   }
 
   // Archive notification
   async archive(id: number, userId: number): Promise<boolean> {
-    const query = `
-      UPDATE notifications 
-      SET is_archived = TRUE, updated_at = CURRENT_TIMESTAMP
-      WHERE id = ? AND user_id = ?
-    `;
+    return withConn(async (conn) => {
+      const query = `
+        UPDATE notifications 
+        SET is_archived = TRUE, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ? AND user_id = ?
+      `;
 
-    try {
-      const [result] = await pool.execute(query, [id, userId]);
-      return (result as any).affectedRows > 0;
-    } catch (error) {
-      logger.error({ error, id, userId }, 'Failed to archive notification');
-      throw error;
-    }
+      try {
+        const [result] = await conn.execute(query, [id, userId]);
+        return (result as any).affectedRows > 0;
+      } catch (error) {
+        logger.error({ error, id, userId }, 'Failed to archive notification');
+        throw error;
+      }
+    });
   }
 
   // Delete notification
   async delete(id: number, userId: number): Promise<boolean> {
-    const query = `
-      DELETE FROM notifications 
-      WHERE id = ? AND user_id = ?
-    `;
+    return withConn(async (conn) => {
+      const query = `
+        DELETE FROM notifications 
+        WHERE id = ? AND user_id = ?
+      `;
 
-    try {
-      const [result] = await pool.execute(query, [id, userId]);
-      return (result as any).affectedRows > 0;
-    } catch (error) {
-      logger.error({ error, id, userId }, 'Failed to delete notification');
-      throw error;
-    }
+      try {
+        const [result] = await conn.execute(query, [id, userId]);
+        return (result as any).affectedRows > 0;
+      } catch (error) {
+        logger.error({ error, id, userId }, 'Failed to delete notification');
+        throw error;
+      }
+    });
   }
 
   // Get notification statistics for a user
   async getStats(userId: number): Promise<NotificationStats> {
-    const query = `
-      SELECT 
-        COUNT(*) as total_notifications,
-        SUM(CASE WHEN is_read = FALSE THEN 1 ELSE 0 END) as unread_count,
-        SUM(CASE WHEN is_archived = FALSE THEN 1 ELSE 0 END) as active_count
-      FROM notifications 
-      WHERE user_id = ? AND (expires_at IS NULL OR expires_at > NOW())
-    `;
+    return withConn(async (conn) => {
+      const query = `
+        SELECT 
+          COUNT(*) as total_notifications,
+          SUM(CASE WHEN is_read = FALSE THEN 1 ELSE 0 END) as unread_count,
+          SUM(CASE WHEN is_archived = FALSE THEN 1 ELSE 0 END) as active_count
+        FROM notifications 
+        WHERE user_id = ? AND (expires_at IS NULL OR expires_at > NOW())
+      `;
 
-    try {
-      const [rows] = await pool.execute(query, [userId]);
-      const stats = (rows as any)[0];
-      return {
-        total_notifications: parseInt(stats.total_notifications) || 0,
-        unread_count: parseInt(stats.unread_count) || 0,
-        active_count: parseInt(stats.active_count) || 0
-      };
-    } catch (error) {
-      logger.error({ error, userId }, 'Failed to get notification stats');
-      throw error;
-    }
+      try {
+        const [rows] = await conn.execute(query, [userId]);
+        const stats = (rows as any)[0];
+        return {
+          total_notifications: parseInt(stats.total_notifications) || 0,
+          unread_count: parseInt(stats.unread_count) || 0,
+          active_count: parseInt(stats.active_count) || 0
+        };
+      } catch (error) {
+        logger.error({ error, userId }, 'Failed to get notification stats');
+        throw error;
+      }
+    });
   }
 
   // Get notification template
   async getTemplate(name: string): Promise<NotificationTemplate | null> {
-    const query = `
-      SELECT * FROM notification_templates 
-      WHERE name = ? AND is_active = TRUE
-    `;
+    return withConn(async (conn) => {
+      const query = `
+        SELECT * FROM notification_templates 
+        WHERE name = ? AND is_active = TRUE
+      `;
 
-    try {
-      const [rows] = await pool.execute(query, [name]);
-      const templates = rows as NotificationTemplate[];
-      return templates.length > 0 ? templates[0] : null;
-    } catch (error) {
-      logger.error({ error, name }, 'Failed to get notification template');
-      throw error;
-    }
+      try {
+        const [rows] = await conn.execute(query, [name]);
+        const templates = rows as NotificationTemplate[];
+        return templates.length > 0 ? templates[0] : null;
+      } catch (error) {
+        logger.error({ error, name }, 'Failed to get notification template');
+        throw error;
+      }
+    });
   }
 
   // Get user notification preferences
   async getPreferences(userId: number): Promise<NotificationPreference | null> {
-    const query = `
-      SELECT * FROM notification_preferences 
-      WHERE user_id = ?
-    `;
+    return withConn(async (conn) => {
+      const query = `
+        SELECT * FROM notification_preferences 
+        WHERE user_id = ?
+      `;
 
-    try {
-      const [rows] = await pool.execute(query, [userId]);
-      const preferences = rows as NotificationPreference[];
-      return preferences.length > 0 ? preferences[0] : null;
-    } catch (error) {
-      logger.error({ error, userId }, 'Failed to get notification preferences');
-      throw error;
-    }
+      try {
+        const [rows] = await conn.execute(query, [userId]);
+        const preferences = rows as NotificationPreference[];
+        return preferences.length > 0 ? preferences[0] : null;
+      } catch (error) {
+        logger.error({ error, userId }, 'Failed to get notification preferences');
+        throw error;
+      }
+    });
   }
 
   // Update user notification preferences
   async updatePreferences(userId: number, preferences: Partial<NotificationPreference>): Promise<NotificationPreference> {
-    const fields = [];
+    const fields: string[] = [];
     const values = [];
 
     Object.entries(preferences).forEach(([key, value]) => {

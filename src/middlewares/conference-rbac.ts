@@ -4,6 +4,7 @@ import { userConferenceAssignmentsRepository } from '../modules/user-conference-
 export interface ConferenceRBACRequest extends Request {
   user?: {
     id: number;
+    email: string;
     role: string;
   };
 }

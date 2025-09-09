@@ -269,6 +269,37 @@ export const attendeesRepository = {
       );
       return (res.rows as any[]) || [];
     });
+  },
+
+  async listByConference(conferenceId: number, params: { page: number; limit: number }) {
+    const { page, limit } = params;
+    const offset = (page - 1) * limit;
+    return withConn(async (conn) => {
+      const listRes = await conn.execute(
+        `SELECT * FROM (
+           SELECT t.*, ROWNUM rn FROM (
+             SELECT a.ID, a.NAME, a.EMAIL, a.PHONE, a.COMPANY, a.POSITION, a.AVATAR_URL, a.DIETARY, a.SPECIAL_NEEDS, a.DATE_OF_BIRTH, a.GENDER, a.CREATED_AT, r.STATUS as REGISTRATION_STATUS
+             FROM ATTENDEES a
+             INNER JOIN REGISTRATIONS r ON a.ID = r.ATTENDEE_ID
+             WHERE r.CONFERENCE_ID = :conferenceId
+             ORDER BY a.CREATED_AT DESC
+           ) t WHERE ROWNUM <= :maxRow
+         ) WHERE rn > :minRow`,
+        { conferenceId, maxRow: offset + limit, minRow: offset },
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
+      );
+      const countRes = await conn.execute(
+        `SELECT COUNT(*) AS CNT 
+         FROM ATTENDEES a
+         INNER JOIN REGISTRATIONS r ON a.ID = r.ATTENDEE_ID
+         WHERE r.CONFERENCE_ID = :conferenceId`,
+        { conferenceId },
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
+      );
+      const rows = (listRes.rows as any[]) || [];
+      const total = Number((countRes.rows as Array<{CNT: number}>)[0]?.CNT || 0);
+      return { rows: rows as AttendeeRow[], total };
+    });
   }
 };
 

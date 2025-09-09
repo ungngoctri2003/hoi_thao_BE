@@ -96,8 +96,8 @@ export const conferencesRepository = {
          RETURNING ID INTO :ID`,
         {
           ...data,
-          START_DATE: formatDate(data.START_DATE),
-          END_DATE: formatDate(data.END_DATE),
+          START_DATE: data.START_DATE ? formatDate(data.START_DATE.toISOString()) : null,
+          END_DATE: data.END_DATE ? formatDate(data.END_DATE.toISOString()) : null,
           STATUS: data.STATUS || 'draft',
           ID: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER }
         },

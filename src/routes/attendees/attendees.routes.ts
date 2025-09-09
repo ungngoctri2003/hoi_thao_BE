@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { auth } from '../../middlewares/auth';
 import { rbac } from '../../middlewares/rbac';
 import { audit } from '../../middlewares/audit';
-import { list, getById, create, update, remove, listRegistrations, search, updateMe, createRegistration } from '../../modules/attendees/attendees.controller';
+import { list, getById, create, update, remove, listRegistrations, search, updateMe, createRegistration, listByConference } from '../../modules/attendees/attendees.controller';
 
 export const attendeesRouter = Router();
 
@@ -15,6 +15,7 @@ attendeesRouter.patch('/:id', auth(), rbac('attendees.write'), audit('data', 'up
 attendeesRouter.delete('/:id', auth(), rbac('attendees.write'), audit('data', 'delete', 'attendee'), remove);
 attendeesRouter.get('/:id/registrations', auth(), rbac('attendees.read'), listRegistrations);
 attendeesRouter.post('/:id/registrations', auth(), rbac('attendees.write'), audit('conference', 'create', 'registration'), createRegistration);
+attendeesRouter.get('/conference/:conferenceId', auth(), rbac('attendees.read'), listByConference);
 
 
 

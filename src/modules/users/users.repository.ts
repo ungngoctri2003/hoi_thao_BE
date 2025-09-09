@@ -242,6 +242,59 @@ export const usersRepository = {
       );
       return (res.rows as any[]) || [];
     });
+  },
+
+  async listAllUsers(page: number, limit: number) {
+    const offset = (page - 1) * limit;
+    return withConn(async (conn) => {
+      // Union APP_USERS and ATTENDEES to get all users
+      const listRes = await conn.execute(
+        `SELECT * FROM (
+           SELECT t.*, ROWNUM rn FROM (
+             SELECT 
+               u.ID, 
+               u.EMAIL, 
+               u.NAME, 
+               u.STATUS, 
+               u.CREATED_AT, 
+               u.LAST_LOGIN, 
+               u.AVATAR_URL,
+               'app_user' as USER_TYPE,
+               (SELECT r.CODE FROM USER_ROLES ur2 JOIN ROLES r ON ur2.ROLE_ID = r.ID WHERE ur2.USER_ID = u.ID AND ROWNUM = 1) as ROLE_CODE
+             FROM APP_USERS u
+             UNION ALL
+             SELECT 
+               a.ID + 10000 as ID,  -- Offset to avoid ID conflicts
+               a.EMAIL, 
+               a.NAME, 
+               'active' as STATUS,
+               a.CREATED_AT,
+               NULL as LAST_LOGIN,
+               a.AVATAR_URL,
+               'attendee' as USER_TYPE,
+               'attendee' as ROLE_CODE
+             FROM ATTENDEES a
+             ORDER BY NAME
+           ) t WHERE ROWNUM <= :maxRow
+         ) WHERE rn > :minRow`,
+        { maxRow: offset + limit, minRow: offset },
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
+      );
+      
+      const countRes = await conn.execute(
+        `SELECT COUNT(*) AS CNT FROM (
+           SELECT ID FROM APP_USERS
+           UNION ALL
+           SELECT ID + 10000 FROM ATTENDEES
+         )`,
+        {},
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
+      );
+      
+      const rows = (listRes.rows as any[]) || [];
+      const total = Number((countRes.rows as Array<{CNT: number}>)[0]?.CNT || 0);
+      return { rows, total };
+    });
   }
 };
 
