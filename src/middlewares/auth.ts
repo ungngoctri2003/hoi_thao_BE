@@ -26,45 +26,56 @@ export function auth() {
     try {
       const header = req.headers.authorization;
       if (!header || !header.startsWith('Bearer ')) {
-        res.status(401).json({ 
-          error: { 
-            code: 'UNAUTHORIZED', 
-            message: 'Missing or invalid authorization header. Use format: Bearer <token>' 
-          } 
+        res.status(401).json({
+          error: {
+            code: 'UNAUTHORIZED',
+            message: 'Missing or invalid authorization header. Use format: Bearer <token>',
+          },
         });
         return;
       }
-      
+
       const token = header.slice('Bearer '.length);
       if (!token) {
-        res.status(401).json({ 
-          error: { 
-            code: 'UNAUTHORIZED', 
-            message: 'Token is required' 
-          } 
+        res.status(401).json({
+          error: {
+            code: 'UNAUTHORIZED',
+            message: 'Token is required',
+          },
         });
         return;
       }
 
       const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET!) as any;
+      console.log('Decoded token:', decoded);
+
       if (!decoded || !decoded.id || !decoded.email) {
-        res.status(401).json({ 
-          error: { 
-            code: 'UNAUTHORIZED', 
-            message: 'Invalid token format' 
-          } 
+        console.error('Invalid token format:', {
+          hasDecoded: !!decoded,
+          hasId: !!decoded?.id,
+          hasEmail: !!decoded?.email,
+        });
+        res.status(401).json({
+          error: {
+            code: 'UNAUTHORIZED',
+            message: 'Invalid token format',
+          },
         });
         return;
       }
 
       // Ensure id is a number
+      console.log('Original decoded.id:', decoded.id, 'type:', typeof decoded.id);
       const userId = Number(decoded.id);
-      if (isNaN(userId)) {
-        res.status(401).json({ 
-          error: { 
-            code: 'UNAUTHORIZED', 
-            message: 'Invalid user ID in token' 
-          } 
+      console.log('Converted userId:', userId, 'isNaN:', isNaN(userId));
+
+      if (isNaN(userId) || userId <= 0) {
+        console.error('Invalid user ID in token:', decoded.id, 'converted to:', userId);
+        res.status(401).json({
+          error: {
+            code: 'UNAUTHORIZED',
+            message: 'Invalid user ID in token',
+          },
         });
         return;
       }
@@ -72,22 +83,22 @@ export function auth() {
       // Get full user information including role and status
       const user = await usersRepository.findById(userId);
       if (!user) {
-        res.status(401).json({ 
-          error: { 
-            code: 'UNAUTHORIZED', 
-            message: 'User not found' 
-          } 
+        res.status(401).json({
+          error: {
+            code: 'UNAUTHORIZED',
+            message: 'User not found',
+          },
         });
         return;
       }
 
       // Check if user is active
       if (user.STATUS && user.STATUS !== 'active') {
-        res.status(401).json({ 
-          error: { 
-            code: 'ACCOUNT_DISABLED', 
-            message: 'Account is disabled' 
-          } 
+        res.status(401).json({
+          error: {
+            code: 'ACCOUNT_DISABLED',
+            message: 'Account is disabled',
+          },
         });
         return;
       }
@@ -95,46 +106,44 @@ export function auth() {
       const perms = await usersRepository.getPermissions(userId);
       const userRoles = await usersRepository.listRoles(userId);
       const primaryRole = userRoles.length > 0 ? userRoles[0].CODE : 'attendee';
-      
-      req.user = { 
-        id: userId, 
-        email: decoded.email, 
+
+      req.user = {
+        id: userId,
+        email: decoded.email,
         name: user.NAME,
         role: primaryRole,
         status: user.STATUS || 'active',
-        permissions: perms 
+        permissions: perms,
       };
       next();
     } catch (error) {
       if (error instanceof jwt.JsonWebTokenError) {
-        res.status(401).json({ 
-          error: { 
-            code: 'UNAUTHORIZED', 
-            message: 'Invalid or expired token' 
-          } 
+        res.status(401).json({
+          error: {
+            code: 'UNAUTHORIZED',
+            message: 'Invalid or expired token',
+          },
         });
         return;
       }
-      
+
       if (error instanceof jwt.TokenExpiredError) {
-        res.status(401).json({ 
-          error: { 
-            code: 'TOKEN_EXPIRED', 
-            message: 'Token has expired' 
-          } 
+        res.status(401).json({
+          error: {
+            code: 'TOKEN_EXPIRED',
+            message: 'Token has expired',
+          },
         });
         return;
       }
 
       logger.error({ error }, 'Auth middleware error');
-      res.status(500).json({ 
-        error: { 
-          code: 'INTERNAL_ERROR', 
-          message: 'Authentication service error' 
-        } 
+      res.status(500).json({
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Authentication service error',
+        },
       });
     }
   };
 }
-
-

@@ -22,21 +22,23 @@ A robust backend system for managing conferences, attendees, sessions, and netwo
 ## Environment Setup
 
 1. Copy `.env.example` to `.env`:
+
    ```bash
    cp .env.example .env
    ```
 
 2. Configure your environment variables in `.env`:
+
    ```env
    # Database
    DB_USER=your_db_user
    DB_PASSWORD=your_db_password
    DB_CONNECT_STRING=localhost:1521/XE
-   
+
    # JWT Secrets (CHANGE THESE IN PRODUCTION!)
    JWT_ACCESS_SECRET=your_super_secret_access_key
    JWT_REFRESH_SECRET=your_super_secret_refresh_key
-   
+
    # Server
    PORT=4000
    NODE_ENV=development
@@ -45,18 +47,29 @@ A robust backend system for managing conferences, attendees, sessions, and netwo
 ## Installation
 
 1. Install dependencies:
+
    ```bash
    npm ci
    ```
 
 2. Build the project:
+
    ```bash
    npm run build
    ```
 
+3. Set up the database:
+
+   ```bash
+   npm run db:init
+   ```
+
+   For detailed database setup instructions, see [DATABASE_SETUP.md](./DATABASE_SETUP.md)
+
 ## Development
 
 Start the development server with hot reload:
+
 ```bash
 npm run dev
 ```
@@ -64,6 +77,7 @@ npm run dev
 ## Production
 
 Start the production server:
+
 ```bash
 npm start
 ```
@@ -95,6 +109,7 @@ npm start
 ## Testing
 
 Run the test suite:
+
 ```bash
 npm test
 ```
@@ -102,11 +117,13 @@ npm test
 ## Docker
 
 Build the Docker image:
+
 ```bash
 docker build -t hoi-thao-be .
 ```
 
 Run with Docker:
+
 ```bash
 docker run -p 4000:4000 --env-file .env hoi-thao-be
 ```
@@ -114,6 +131,7 @@ docker run -p 4000:4000 --env-file .env hoi-thao-be
 ## Database Schema
 
 The system expects the following main tables:
+
 - `APP_USERS` - User accounts
 - `CONFERENCES` - Conference information
 - `SESSIONS` - Session details
@@ -158,7 +176,3 @@ The system expects the following main tables:
 ## License
 
 ISC License
-
-
-
-
