@@ -1,13 +1,14 @@
 import { Router } from 'express';
 import { withConn } from '../../config/db';
 import oracledb from 'oracledb';
+import { globalAIAnalytics } from '../../modules/analytics/analytics.controller';
 
 export const testRouter = Router();
 
 // Create sample data for testing
 testRouter.post('/create-sample-data', async (req, res) => {
   try {
-    await withConn(async (conn) => {
+    await withConn(async conn => {
       // Check if conference exists
       const conferenceCheck = await conn.execute(
         'SELECT ID FROM CONFERENCES WHERE ROWNUM = 1',
@@ -32,11 +33,11 @@ testRouter.post('/create-sample-data', async (req, res) => {
             capacity: 100,
             category: 'Technology',
             organizer: 'Test Organizer',
-            ID: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER }
+            ID: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER },
           },
           { autoCommit: true }
         );
-        
+
         conferenceId = conferenceResult.outBinds.ID[0];
         console.log(`Created conference with ID: ${conferenceId}`);
       } else {
@@ -60,13 +61,13 @@ testRouter.post('/create-sample-data', async (req, res) => {
           {
             title: 'General Discussion',
             description: 'General messaging and discussion session',
-            status: 'active'
+            status: 'active',
           },
           {
             title: 'Networking Chat',
             description: 'Networking and connection session',
-            status: 'active'
-          }
+            status: 'active',
+          },
         ];
 
         for (const session of sessions) {
@@ -81,11 +82,11 @@ testRouter.post('/create-sample-data', async (req, res) => {
               status: session.status,
               start: new Date(),
               end: new Date(Date.now() + 24 * 60 * 60 * 1000),
-              ID: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER }
+              ID: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER },
             },
             { autoCommit: true }
           );
-          
+
           const sessionId = sessionResult.outBinds.ID[0];
           console.log(`Created session: ${session.title} (ID: ${sessionId})`);
         }
@@ -102,7 +103,7 @@ testRouter.post('/create-sample-data', async (req, res) => {
         success: true,
         message: 'Sample data created successfully',
         conferenceId,
-        sessions: sessionsResult.rows
+        sessions: sessionsResult.rows,
       });
     });
   } catch (error) {
@@ -110,7 +111,22 @@ testRouter.post('/create-sample-data', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to create sample data',
-      error: error.message
+      error: error.message,
     });
+  }
+});
+
+// Test analytics endpoint without authentication
+testRouter.get('/test-analytics', async (req, res) => {
+  try {
+    await globalAIAnalytics(req, res, error => {
+      if (error) {
+        console.error('Analytics error:', error);
+        res.status(500).json({ error: error.message });
+      }
+    });
+  } catch (error) {
+    console.error('Test analytics error:', error);
+    res.status(500).json({ error: error.message });
   }
 });
