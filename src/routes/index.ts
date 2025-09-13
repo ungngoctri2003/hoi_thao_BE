@@ -23,6 +23,7 @@ import { healthRouter } from './health/health.routes';
 import { uploadRouter } from './upload/upload.routes';
 import notificationsRouter from './notifications/notifications.routes';
 import { userConferenceAssignmentsRouter } from './user-conference-assignments/user-conference-assignments.routes';
+import { conferenceRegistrationsRouter } from './conference-registrations/conference-registrations.routes';
 import { publicRouter } from './public/public.routes';
 import { testRouter } from './test/test.routes';
 import messagingRouter from './messaging.routes';
@@ -58,6 +59,7 @@ router.use('/health', healthRouter);
 router.use('/upload', uploadRouter);
 router.use('/notifications', notificationsRouter);
 router.use('/user-conference-assignments', userConferenceAssignmentsRouter);
+router.use('/conference-registrations', conferenceRegistrationsRouter);
 router.use('/messaging', messagingRouter);
 router.use('/test', testRouter);
 

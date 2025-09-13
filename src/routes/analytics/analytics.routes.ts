@@ -7,6 +7,7 @@ import {
   sessionEngagement,
   networking,
   globalAIAnalytics,
+  conferenceAIAnalytics,
 } from '../../modules/analytics/analytics.controller';
 
 export const analyticsRouter = Router();
@@ -26,3 +27,9 @@ analyticsRouter.get(
 );
 analyticsRouter.get('/analytics/networking', auth(), rbac('analytics.view'), networking);
 analyticsRouter.get('/analytics/global-ai', auth(), rbac('analytics.view'), globalAIAnalytics);
+analyticsRouter.get(
+  '/analytics/conference-ai',
+  auth(),
+  rbac('analytics.view'),
+  conferenceAIAnalytics
+);
