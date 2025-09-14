@@ -130,3 +130,226 @@ testRouter.get('/test-analytics', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// Test session validation without authentication
+testRouter.post('/test-session-validation', async (req, res) => {
+  try {
+    const { createSessionSchema } = require('../../modules/sessions/sessions.schemas');
+
+    console.log('Test session validation request:', {
+      params: req.params,
+      body: req.body,
+      bodyType: typeof req.body,
+      bodyKeys: Object.keys(req.body || {}),
+    });
+
+    const validation = createSessionSchema.safeParse({
+      params: { confId: '1' }, // Use a test conference ID
+      body: req.body,
+    });
+
+    if (!validation.success) {
+      console.log('Validation failed:', validation.error.issues);
+
+      // Create a more user-friendly error message
+      const errors = validation.error.issues.map(issue => {
+        const field = issue.path.join('.');
+        let message = issue.message;
+
+        // Provide more specific error messages for common issues
+        if (field === 'body.TITLE') {
+          if (issue.code === 'invalid_type' && issue.input === undefined) {
+            message = 'Session title is required';
+          } else if (issue.code === 'invalid_type' && issue.input === null) {
+            message = 'Session title cannot be null';
+          } else if (issue.code === 'too_small' && issue.input === '') {
+            message = 'Session title cannot be empty';
+          }
+        }
+
+        return {
+          field,
+          message,
+        };
+      });
+
+      res.status(400).json({
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid session data. Please check the required fields.',
+          details: errors,
+        },
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      message: 'Validation passed',
+      validatedData: validation.data,
+    });
+  } catch (error) {
+    console.error('Test validation error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Test simple response without database
+testRouter.get('/test-simple', async (req, res) => {
+  try {
+    res.json({
+      success: true,
+      message: 'Simple test successful',
+      data: { test: 'value' },
+    });
+  } catch (error) {
+    console.error('Simple test error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// Test database query without update
+testRouter.get('/test-db-query/:id', async (req, res) => {
+  try {
+    const { sessionsRepository } = require('../../modules/sessions/sessions.repository');
+
+    console.log('Testing database query for ID:', req.params.id);
+
+    const item = await sessionsRepository.findById(Number(req.params.id));
+
+    console.log('Database query result:', {
+      hasItem: !!item,
+      itemType: typeof item,
+      itemKeys: item ? Object.keys(item) : 'no item',
+    });
+
+    res.json({
+      success: true,
+      message: 'Database query successful',
+      data: item,
+    });
+  } catch (error) {
+    console.error('Database query error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// Test session update without authentication
+testRouter.patch('/test-session-update/:id', async (req, res) => {
+  try {
+    const { sessionsRepository } = require('../../modules/sessions/sessions.repository');
+
+    console.log('Test session update request for ID:', req.params.id);
+
+    // Simple update without validation for testing
+    const sessionData = req.body;
+
+    // Convert string dates to Date objects if they exist
+    if (sessionData.START_TIME) {
+      sessionData.START_TIME = new Date(sessionData.START_TIME);
+      // Validate that the date is valid
+      if (isNaN(sessionData.START_TIME.getTime())) {
+        res.status(400).json({
+          success: false,
+          error: 'Invalid start time format',
+        });
+        return;
+      }
+    }
+
+    if (sessionData.END_TIME) {
+      sessionData.END_TIME = new Date(sessionData.END_TIME);
+      // Validate that the date is valid
+      if (isNaN(sessionData.END_TIME.getTime())) {
+        res.status(400).json({
+          success: false,
+          error: 'Invalid end time format',
+        });
+        return;
+      }
+    }
+
+    console.log('Updating session with data keys:', Object.keys(sessionData));
+
+    const item = await sessionsRepository.update(Number(req.params.id), sessionData);
+
+    console.log('Test route - Item from repository:', {
+      hasItem: !!item,
+      itemType: typeof item,
+      itemKeys: item ? Object.keys(item) : 'no item',
+      itemString: item ? JSON.stringify(item) : 'no item',
+    });
+
+    res.json({
+      success: true,
+      message: 'Session updated successfully',
+      data: item
+        ? {
+            ID: item.ID,
+            CONFERENCE_ID: item.CONFERENCE_ID,
+            ROOM_ID: item.ROOM_ID,
+            TITLE: item.TITLE,
+            SPEAKER: item.SPEAKER,
+            START_TIME: item.START_TIME,
+            END_TIME: item.END_TIME,
+            STATUS: item.STATUS,
+            DESCRIPTION: item.DESCRIPTION,
+          }
+        : null,
+    });
+  } catch (error) {
+    console.error('Test session update error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// Test session update with dates
+testRouter.patch('/test-session-update-dates/:id', async (req, res) => {
+  try {
+    const { sessionsRepository } = require('../../modules/sessions/sessions.repository');
+
+    console.log('Test session update with dates for ID:', req.params.id);
+
+    // Test with specific date format
+    const sessionData = {
+      TITLE: 'Test Session with Dates',
+      START_TIME: new Date('2025-09-14T15:24:00.000Z'),
+      END_TIME: new Date('2025-09-14T16:24:00.000Z'),
+    };
+
+    console.log('Updating session with dates:', {
+      startTime: sessionData.START_TIME.toISOString(),
+      endTime: sessionData.END_TIME.toISOString(),
+    });
+
+    const item = await sessionsRepository.update(Number(req.params.id), sessionData);
+
+    res.json({
+      success: true,
+      message: 'Session updated successfully with dates',
+      data: item
+        ? {
+            ID: item.ID,
+            TITLE: item.TITLE,
+            START_TIME: item.START_TIME,
+            END_TIME: item.END_TIME,
+          }
+        : null,
+    });
+  } catch (error) {
+    console.error('Test session update with dates error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
