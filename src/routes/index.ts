@@ -45,7 +45,7 @@ router.use('/permissions', permissionsRouter);
 router.use('/registrations', registrationsRouter);
 router.use('/checkins', checkinsRouter);
 router.use('/conferences', conferencesRouter);
-router.use('/', venueRouter);
+router.use('/venue', venueRouter);
 router.use('/', sessionsRouter);
 router.use('/users', usersRouter);
 router.use('/', messagesRouter);

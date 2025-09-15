@@ -23,9 +23,9 @@ export const usersRepository = {
                     (SELECT r.CODE FROM USER_ROLES ur2 JOIN ROLES r ON ur2.ROLE_ID = r.ID WHERE ur2.USER_ID = u.ID ORDER BY r.ID FETCH FIRST 1 ROWS ONLY) as ROLE_CODE
              FROM APP_USERS u
              ORDER BY u.CREATED_AT DESC
-           ) t WHERE ROWNUM <= :maxRow
-         ) WHERE rn > :minRow`,
-        { maxRow: offset + limit, minRow: offset },
+           ) t WHERE ROWNUM <= :max_row
+         ) WHERE rn > :min_row`,
+        { max_row: offset + limit, min_row: offset },
         { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       const countRes = await conn.execute(
@@ -68,8 +68,8 @@ export const usersRepository = {
         `SELECT r.CODE as role_code 
          FROM USER_ROLES ur 
          JOIN ROLES r ON ur.ROLE_ID = r.ID 
-         WHERE ur.USER_ID = :userId ORDER BY r.ID FETCH FIRST 1 ROWS ONLY`,
-        { userId },
+         WHERE ur.USER_ID = :user_id ORDER BY r.ID FETCH FIRST 1 ROWS ONLY`,
+        { user_id: userId },
         { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       const rows = (res.rows as any[]) || [];
@@ -98,11 +98,11 @@ export const usersRepository = {
     return withConn(async conn => {
       // Build dynamic query based on available data
       const fields = ['EMAIL', 'NAME'];
-      const values = [':EMAIL', ':NAME'];
+      const values = [':email', ':name'];
       const bindParams: any = {
         EMAIL: data.EMAIL,
         NAME: data.NAME,
-        ID: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER },
+        id: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER },
       };
 
       // Add optional fields only if they have values
@@ -126,14 +126,14 @@ export const usersRepository = {
 
       const query = `INSERT INTO APP_USERS (${fields.join(', ')}) VALUES (${values.join(
         ', '
-      )}) RETURNING ID INTO :ID`;
+      )}) RETURNING ID INTO :id`;
 
       console.log('Creating user with query:', query);
       console.log('Bind params:', bindParams);
 
       const res = await conn.execute(query, bindParams, { autoCommit: true });
 
-      const id = (res.outBinds as { ID: number[] }).ID[0];
+      const id = (res.outBinds as { id: number[] }).id[0];
       if (!id) throw new Error('Failed to get created ID');
 
       return {
@@ -155,8 +155,8 @@ export const usersRepository = {
          JOIN ROLES r ON r.ID = ur.ROLE_ID
          JOIN ROLE_PERMISSIONS rp ON rp.ROLE_ID = r.ID
          JOIN PERMISSIONS p ON p.ID = rp.PERMISSION_ID
-         WHERE ur.USER_ID = :userId`,
-        { userId },
+         WHERE ur.USER_ID = :user_id`,
+        { user_id: userId },
         { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       const rows = (res.rows as any[]) || [];
@@ -208,8 +208,8 @@ export const usersRepository = {
   async assignRole(userId: number, roleId: number) {
     return withConn(async conn => {
       await conn.execute(
-        `INSERT INTO USER_ROLES (USER_ID, ROLE_ID) VALUES (:userId, :roleId)`,
-        { userId, roleId },
+        `INSERT INTO USER_ROLES (USER_ID, ROLE_ID) VALUES (:user_id, :role_id)`,
+        { user_id: userId, role_id: roleId },
         { autoCommit: true }
       );
     });
@@ -218,8 +218,8 @@ export const usersRepository = {
   async removeRole(userId: number, roleId: number) {
     return withConn(async conn => {
       await conn.execute(
-        `DELETE FROM USER_ROLES WHERE USER_ID = :userId AND ROLE_ID = :roleId`,
-        { userId, roleId },
+        `DELETE FROM USER_ROLES WHERE USER_ID = :user_id AND ROLE_ID = :role_id`,
+        { user_id: userId, role_id: roleId },
         { autoCommit: true }
       );
     });
@@ -228,8 +228,8 @@ export const usersRepository = {
   async removeAllRoles(userId: number) {
     return withConn(async conn => {
       await conn.execute(
-        `DELETE FROM USER_ROLES WHERE USER_ID = :userId`,
-        { userId },
+        `DELETE FROM USER_ROLES WHERE USER_ID = :user_id`,
+        { user_id: userId },
         { autoCommit: true }
       );
     });
@@ -238,8 +238,8 @@ export const usersRepository = {
   async listRoles(userId: number) {
     return withConn(async conn => {
       const res = await conn.execute(
-        `SELECT r.ID, r.CODE, r.NAME FROM USER_ROLES ur JOIN ROLES r ON r.ID = ur.ROLE_ID WHERE ur.USER_ID = :userId`,
-        { userId },
+        `SELECT r.ID, r.CODE, r.NAME FROM USER_ROLES ur JOIN ROLES r ON r.ID = ur.ROLE_ID WHERE ur.USER_ID = :user_id`,
+        { user_id: userId },
         { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       return (res.rows as any[]) || [];
@@ -273,8 +273,8 @@ export const usersRepository = {
         `SELECT u.ID, u.EMAIL, u.NAME, u.STATUS, u.AVATAR_URL 
          FROM APP_USERS u 
          JOIN USER_ROLES ur ON u.ID = ur.USER_ID 
-         WHERE ur.ROLE_ID = :roleId`,
-        { roleId },
+         WHERE ur.ROLE_ID = :role_id`,
+        { role_id: roleId },
         { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       return (res.rows as any[]) || [];
@@ -323,9 +323,9 @@ export const usersRepository = {
                'attendee' as ROLE_CODE
              FROM ATTENDEES a
              ORDER BY NAME
-           ) t WHERE ROWNUM <= :maxRow
-         ) WHERE rn > :minRow`,
-        { maxRow: offset + limit, minRow: offset },
+           ) t WHERE ROWNUM <= :max_row
+         ) WHERE rn > :min_row`,
+        { max_row: offset + limit, min_row: offset },
         { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
 
@@ -520,7 +520,7 @@ export const usersRepository = {
   },
 
   // Get available users for adding to chat (all users except current user)
-  async getAvailableUsers(currentUserId?: number) {
+  async getAvailableUsers(current_user_id?: number) {
     return withConn(async conn => {
       try {
         // Query to get both APP_USERS and ATTENDEES using UNION, avoiding duplicates
@@ -564,20 +564,20 @@ export const usersRepository = {
 
         let binds: any = {};
 
-        // Ensure currentUserId is a valid number before using it
+        // Ensure current_user_id is a valid number before using it
         if (
-          currentUserId !== undefined &&
-          currentUserId !== null &&
-          !isNaN(Number(currentUserId))
+          current_user_id !== undefined &&
+          current_user_id !== null &&
+          !isNaN(Number(current_user_id))
         ) {
-          const validUserId = Number(currentUserId);
+          const validUserId = Number(current_user_id);
           // Wrap the entire query to exclude current user
           query = `
             SELECT * FROM (
               ${query}
-            ) WHERE ID != :currentUserId
+            ) WHERE ID != :current_user_id
           `;
-          binds.currentUserId = validUserId;
+          binds.current_user_id = validUserId;
           console.log('Excluding current user ID:', validUserId);
         } else {
           console.log('No valid current user ID provided, returning all users');
@@ -620,8 +620,8 @@ export const usersRepository = {
               // Only get role from USER_ROLES for app_user type
               if (row.USER_TYPE === 'app_user') {
                 const roleResult = await conn.execute(
-                  `SELECT r.CODE FROM USER_ROLES ur JOIN ROLES r ON ur.ROLE_ID = r.ID WHERE ur.USER_ID = :userId ORDER BY r.ID FETCH FIRST 1 ROWS ONLY`,
-                  { userId: row.ID },
+                  `SELECT r.CODE FROM USER_ROLES ur JOIN ROLES r ON ur.ROLE_ID = r.ID WHERE ur.USER_ID = :user_id ORDER BY r.ID FETCH FIRST 1 ROWS ONLY`,
+                  { user_id: row.ID },
                   { outFormat: oracledb.OUT_FORMAT_OBJECT }
                 );
                 const roleRows = (roleResult.rows as any[]) || [];
@@ -672,10 +672,10 @@ export const usersRepository = {
   },
 
   // Get users by conference category (conference users, system users, non-conference users)
-  async getUsersByConferenceCategory(conferenceId?: number, currentUserId?: number) {
+  async getUsersByConferenceCategory(conferenceId?: number, current_user_id?: number) {
     return withConn(async conn => {
       try {
-        console.log('getUsersByConferenceCategory called with:', { conferenceId, currentUserId });
+        console.log('getUsersByConferenceCategory called with:', { conferenceId, current_user_id });
 
         // Get all users and categorize them properly
         let query = `
@@ -774,17 +774,17 @@ export const usersRepository = {
 
         // Exclude current user if provided
         if (
-          currentUserId !== undefined &&
-          currentUserId !== null &&
-          !isNaN(Number(currentUserId))
+          current_user_id !== undefined &&
+          current_user_id !== null &&
+          !isNaN(Number(current_user_id))
         ) {
-          const validUserId = Number(currentUserId);
+          const validUserId = Number(current_user_id);
           query = `
             SELECT * FROM (
               ${query}
-            ) WHERE ID != :currentUserId
+            ) WHERE ID != :current_user_id
           `;
-          binds.currentUserId = validUserId;
+          binds.current_user_id = validUserId;
         }
 
         query += ' ORDER BY CATEGORY, NAME';
@@ -823,7 +823,7 @@ export const usersRepository = {
                 SELECT r.CODE, r.NAME
                 FROM user_roles ur
                 JOIN roles r ON ur.role_id = r.ID
-                WHERE ur.user_id = :userId
+                WHERE ur.user_id = :user_id
               `;
               const roleResult = await conn.execute(
                 roleQuery,
@@ -857,10 +857,13 @@ export const usersRepository = {
   },
 
   // Get conference users with conference information
-  async getConferenceUsersWithDetails(conferenceId?: number, currentUserId?: number) {
+  async getConferenceUsersWithDetails(conferenceId?: number, current_user_id?: number) {
     return withConn(async conn => {
       try {
-        console.log('getConferenceUsersWithDetails called with:', { conferenceId, currentUserId });
+        console.log('getConferenceUsersWithDetails called with:', {
+          conferenceId,
+          current_user_id,
+        });
 
         // Get only conference users with their conference details
         let query = `
@@ -925,17 +928,17 @@ export const usersRepository = {
 
         // Exclude current user if provided
         if (
-          currentUserId !== undefined &&
-          currentUserId !== null &&
-          !isNaN(Number(currentUserId))
+          current_user_id !== undefined &&
+          current_user_id !== null &&
+          !isNaN(Number(current_user_id))
         ) {
-          const validUserId = Number(currentUserId);
+          const validUserId = Number(current_user_id);
           query = `
             SELECT * FROM (
               ${query}
-            ) WHERE ID != :currentUserId
+            ) WHERE ID != :current_user_id
           `;
-          binds.currentUserId = validUserId;
+          binds.current_user_id = validUserId;
         }
 
         query += ' ORDER BY CONFERENCE_NAME, NAME';
@@ -974,7 +977,7 @@ export const usersRepository = {
                 SELECT r.CODE, r.NAME
                 FROM user_roles ur
                 JOIN roles r ON ur.role_id = r.ID
-                WHERE ur.user_id = :userId
+                WHERE ur.user_id = :user_id
               `;
               const roleResult = await conn.execute(
                 roleQuery,
@@ -1018,7 +1021,7 @@ export const usersRepository = {
 
         // Check if it's an app user
         const userCheck = await conn.execute(
-          `SELECT ID, EMAIL, NAME FROM APP_USERS WHERE ID = :userId AND STATUS = 'active'`,
+          `SELECT ID, EMAIL, NAME FROM APP_USERS WHERE ID = :user_id AND STATUS = 'active'`,
           { userId },
           { outFormat: oracledb.OUT_FORMAT_OBJECT }
         );
@@ -1029,7 +1032,7 @@ export const usersRepository = {
         } else {
           // Check if it's an attendee
           const attendeeCheck = await conn.execute(
-            `SELECT ID, EMAIL, NAME FROM ATTENDEES WHERE ID = :userId`,
+            `SELECT ID, EMAIL, NAME FROM ATTENDEES WHERE ID = :user_id`,
             { userId },
             { outFormat: oracledb.OUT_FORMAT_OBJECT }
           );
@@ -1046,7 +1049,7 @@ export const usersRepository = {
         try {
           // Check if user is already in messaging system
           const existingCheck = await conn.execute(
-            `SELECT ID FROM MESSAGING_USERS WHERE USER_ID = :userId AND IS_ACTIVE = 1`,
+            `SELECT ID FROM MESSAGING_USERS WHERE USER_ID = :user_id AND IS_ACTIVE = 1`,
             { userId },
             { outFormat: oracledb.OUT_FORMAT_OBJECT }
           );
@@ -1059,7 +1062,7 @@ export const usersRepository = {
           // Insert user into MESSAGING_USERS table
           const insertResult = await conn.execute(
             `INSERT INTO MESSAGING_USERS (USER_ID, USER_TYPE, CONFERENCE_ID, ADDED_BY, IS_ACTIVE, MESSAGE_COUNT, LAST_MESSAGE_TIME)
-             VALUES (:userId, :userType, :conferenceId, :addedBy, 1, 0, NULL)
+             VALUES (:user_id, :userType, :conferenceId, :addedBy, 1, 0, NULL)
              RETURNING ID INTO :newId`,
             {
               userId,
@@ -1261,7 +1264,7 @@ export const usersRepository = {
         await conn.execute(
           `UPDATE MESSAGING_MESSAGES 
            SET IS_READ = 1, READ_AT = SYSTIMESTAMP
-           WHERE ID = :messageId AND ATTENDEE_ID = :userId`,
+           WHERE ID = :messageId AND ATTENDEE_ID = :user_id`,
           { messageId, userId },
           { autoCommit: true }
         );
@@ -1295,7 +1298,7 @@ export const usersRepository = {
           LEFT JOIN APP_USERS u1 ON ms.USER1_ID = u1.ID
           LEFT JOIN APP_USERS u2 ON ms.USER2_ID = u2.ID
           LEFT JOIN CONFERENCES c ON ms.CONFERENCE_ID = c.ID
-          WHERE (ms.USER1_ID = :userId OR ms.USER2_ID = :userId)
+          WHERE (ms.USER1_ID = :user_id OR ms.USER2_ID = :user_id)
           AND ms.IS_ACTIVE = 1
         `;
 

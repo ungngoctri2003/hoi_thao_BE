@@ -5,6 +5,7 @@ export type SessionRow = {
   ID: number;
   CONFERENCE_ID: number;
   ROOM_ID: number | null;
+  ROOM_NAME?: string | null;
   TITLE: string;
   SPEAKER: string | null;
   START_TIME: Date;
@@ -35,6 +36,7 @@ function cleanSessionData(row: any): SessionRow | null {
     ID: row.ID,
     CONFERENCE_ID: row.CONFERENCE_ID,
     ROOM_ID: row.ROOM_ID,
+    ROOM_NAME: row.ROOM_NAME,
     TITLE: row.TITLE,
     SPEAKER: row.SPEAKER,
     START_TIME: row.START_TIME,
@@ -58,8 +60,11 @@ export const sessionsRepository = {
         binds.roomId = filters.roomId;
       }
       const res = await conn.execute(
-        `SELECT ID, CONFERENCE_ID, ROOM_ID, TITLE, SPEAKER, START_TIME, END_TIME, STATUS, DESCRIPTION
-         FROM SESSIONS WHERE ${where} ORDER BY START_TIME NULLS LAST`,
+        `SELECT s.ID, s.CONFERENCE_ID, s.ROOM_ID, s.TITLE, s.SPEAKER, s.START_TIME, s.END_TIME, s.STATUS, s.DESCRIPTION,
+                r.NAME as ROOM_NAME
+         FROM SESSIONS s
+         LEFT JOIN ROOMS r ON s.ROOM_ID = r.ID
+         WHERE ${where} ORDER BY s.START_TIME NULLS LAST`,
         binds,
         {
           outFormat: oracledb.OUT_FORMAT_OBJECT,
@@ -84,8 +89,11 @@ export const sessionsRepository = {
         binds.status = filters.status;
       }
       const res = await conn.execute(
-        `SELECT ID, CONFERENCE_ID, ROOM_ID, TITLE, SPEAKER, START_TIME, END_TIME, STATUS, DESCRIPTION
-         FROM SESSIONS WHERE ${where} ORDER BY START_TIME NULLS LAST`,
+        `SELECT s.ID, s.CONFERENCE_ID, s.ROOM_ID, s.TITLE, s.SPEAKER, s.START_TIME, s.END_TIME, s.STATUS, s.DESCRIPTION,
+                r.NAME as ROOM_NAME
+         FROM SESSIONS s
+         LEFT JOIN ROOMS r ON s.ROOM_ID = r.ID
+         WHERE ${where} ORDER BY s.START_TIME NULLS LAST`,
         binds,
         {
           outFormat: oracledb.OUT_FORMAT_OBJECT,
@@ -100,7 +108,11 @@ export const sessionsRepository = {
   async findById(id: number): Promise<SessionRow | null> {
     return withConn(async conn => {
       const res = await conn.execute(
-        `SELECT ID, CONFERENCE_ID, ROOM_ID, TITLE, SPEAKER, START_TIME, END_TIME, STATUS, DESCRIPTION FROM SESSIONS WHERE ID = :id`,
+        `SELECT s.ID, s.CONFERENCE_ID, s.ROOM_ID, s.TITLE, s.SPEAKER, s.START_TIME, s.END_TIME, s.STATUS, s.DESCRIPTION,
+                r.NAME as ROOM_NAME
+         FROM SESSIONS s
+         LEFT JOIN ROOMS r ON s.ROOM_ID = r.ID
+         WHERE s.ID = :id`,
         { id },
         { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
