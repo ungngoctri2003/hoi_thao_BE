@@ -12,7 +12,7 @@ import {
 
 export const analyticsRouter = Router();
 
-analyticsRouter.get('/analytics/overview', auth(), rbac('analytics.view'), overview);
+analyticsRouter.get('/analytics/overview', auth(), overview);
 analyticsRouter.get(
   '/analytics/conferences/:id/attendance',
   auth(),

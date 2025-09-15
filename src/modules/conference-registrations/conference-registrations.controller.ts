@@ -3,6 +3,7 @@ import { userConferenceAssignmentsRepository } from '../user-conference-assignme
 import { conferencesRepository } from '../conferences/conferences.repository';
 import { usersRepository } from '../users/users.repository';
 import { logger } from '../../app';
+import { ok } from '../../utils/responses';
 
 export class ConferenceRegistrationsController {
   // Register for a conference
@@ -197,3 +198,39 @@ export class ConferenceRegistrationsController {
 
 export const conferenceRegistrationsController = new ConferenceRegistrationsController();
 
+// Standalone function for getting my registrations
+export async function getMyRegistrations(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = (req as any).user?.id;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        message: 'Unauthorized',
+      });
+      return;
+    }
+
+    // Get user's conference assignments
+    const assignments = await userConferenceAssignmentsRepository.findByUserId(Number(userId));
+
+    // Get conference details for each assignment
+    const registrations = await Promise.all(
+      assignments.map(async assignment => {
+        const conference = await conferencesRepository.findById(assignment.conferenceId);
+        return {
+          id: assignment.id,
+          conferenceId: assignment.conferenceId,
+          conference: conference,
+          status: assignment.status || 'registered',
+          registeredAt: assignment.createdAt,
+          role: assignment.role,
+        };
+      })
+    );
+
+    res.json(ok(registrations));
+  } catch (error) {
+    next(error);
+  }
+}

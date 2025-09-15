@@ -7,6 +7,7 @@ import { chatGPTService } from '../../services/chatgpt.service';
 export async function overview(_req: Request, res: Response, next: NextFunction) {
   try {
     const data = await withConn(async conn => {
+      // Get basic counts
       const attendees = await conn.execute(
         `SELECT COUNT(*) AS CNT FROM ATTENDEES`,
         {},
@@ -18,14 +19,210 @@ export async function overview(_req: Request, res: Response, next: NextFunction)
         { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       const checkins = await conn.execute(
-        `SELECT COUNT(*) AS CNT FROM CHECKINS`,
+        `SELECT COUNT(*) AS CNT FROM REGISTRATIONS WHERE STATUS = 'checked-in'`,
         {},
         { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
+      const conferences = await conn.execute(
+        `SELECT COUNT(*) AS CNT FROM CONFERENCES`,
+        {},
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
+      );
+
+      // Get upcoming events
+      const upcomingEvents = await conn.execute(
+        `SELECT 
+           c.ID,
+           c.NAME,
+           c.START_DATE,
+           c.END_DATE,
+           c.LOCATION,
+           c.STATUS,
+           COUNT(r.ID) as TOTAL_REGISTRATIONS
+         FROM CONFERENCES c
+         LEFT JOIN REGISTRATIONS r ON c.ID = r.CONFERENCE_ID
+         WHERE c.START_DATE >= SYSDATE
+         GROUP BY c.ID, c.NAME, c.START_DATE, c.END_DATE, c.LOCATION, c.STATUS
+         ORDER BY c.START_DATE
+         FETCH FIRST 5 ROWS ONLY`,
+        {},
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
+      );
+
+      const totalAttendees = Number((attendees.rows as Array<{ CNT: number }>)[0]?.CNT || 0);
+      const totalRegistrations = Number(
+        (registrations.rows as Array<{ CNT: number }>)[0]?.CNT || 0
+      );
+      const totalCheckIns = Number((checkins.rows as Array<{ CNT: number }>)[0]?.CNT || 0);
+      const totalConferences = Number((conferences.rows as Array<{ CNT: number }>)[0]?.CNT || 0);
+
+      const attendanceRate =
+        totalRegistrations > 0
+          ? Math.round((totalCheckIns / totalRegistrations) * 100 * 10) / 10
+          : 0;
+
+      // Mock data for now
+      const recentActivity = [
+        {
+          type: 'checkin',
+          message: 'Nguyễn Văn A đã check-in',
+          timestamp: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
+        },
+        {
+          type: 'registration',
+          message: 'Trần Thị B đăng ký Workshop AI',
+          timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+        },
+        {
+          type: 'event',
+          message: 'Hội nghị Công nghệ bắt đầu',
+          timestamp: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+        },
+        {
+          type: 'alert',
+          message: 'Sự kiện sắp đầy chỗ',
+          timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+        },
+      ];
+
+      const systemAlerts = [
+        {
+          type: 'warning',
+          message: 'Sự kiện sắp đầy chỗ - Workshop AI có 95% chỗ đã đăng ký',
+          timestamp: new Date().toISOString(),
+        },
+        {
+          type: 'info',
+          message: 'Check-in sắp bắt đầu - Hội nghị Công nghệ bắt đầu trong 2 giờ',
+          timestamp: new Date().toISOString(),
+        },
+      ];
+
+      // Mock hourly data
+      const checkInsLast24h = [
+        { timestamp: new Date().setHours(8, 0, 0, 0), count: 15, checkins: 15 },
+        { timestamp: new Date().setHours(9, 0, 0, 0), count: 25, checkins: 25 },
+        { timestamp: new Date().setHours(10, 0, 0, 0), count: 35, checkins: 35 },
+        { timestamp: new Date().setHours(11, 0, 0, 0), count: 20, checkins: 20 },
+        { timestamp: new Date().setHours(12, 0, 0, 0), count: 10, checkins: 10 },
+        { timestamp: new Date().setHours(13, 0, 0, 0), count: 30, checkins: 30 },
+        { timestamp: new Date().setHours(14, 0, 0, 0), count: 40, checkins: 40 },
+        { timestamp: new Date().setHours(15, 0, 0, 0), count: 25, checkins: 25 },
+        { timestamp: new Date().setHours(16, 0, 0, 0), count: 20, checkins: 20 },
+        { timestamp: new Date().setHours(17, 0, 0, 0), count: 15, checkins: 15 },
+      ];
+
+      // Mock registration trends
+      const registrationTrends = [
+        {
+          date: '2024-12-01',
+          timestamp: new Date('2024-12-01').toISOString(),
+          count: 10,
+          registrations: 10,
+        },
+        {
+          date: '2024-12-02',
+          timestamp: new Date('2024-12-02').toISOString(),
+          count: 15,
+          registrations: 15,
+        },
+        {
+          date: '2024-12-03',
+          timestamp: new Date('2024-12-03').toISOString(),
+          count: 20,
+          registrations: 20,
+        },
+        {
+          date: '2024-12-04',
+          timestamp: new Date('2024-12-04').toISOString(),
+          count: 25,
+          registrations: 25,
+        },
+        {
+          date: '2024-12-05',
+          timestamp: new Date('2024-12-05').toISOString(),
+          count: 30,
+          registrations: 30,
+        },
+        {
+          date: '2024-12-06',
+          timestamp: new Date('2024-12-06').toISOString(),
+          count: 35,
+          registrations: 35,
+        },
+        {
+          date: '2024-12-07',
+          timestamp: new Date('2024-12-07').toISOString(),
+          count: 40,
+          registrations: 40,
+        },
+        {
+          date: '2024-12-08',
+          timestamp: new Date('2024-12-08').toISOString(),
+          count: 45,
+          registrations: 45,
+        },
+        {
+          date: '2024-12-09',
+          timestamp: new Date('2024-12-09').toISOString(),
+          count: 50,
+          registrations: 50,
+        },
+        {
+          date: '2024-12-10',
+          timestamp: new Date('2024-12-10').toISOString(),
+          count: 55,
+          registrations: 55,
+        },
+      ];
+
+      // Format upcoming events
+      const upcomingEventsData = (
+        upcomingEvents.rows as Array<{
+          ID: number;
+          NAME: string;
+          START_DATE: string;
+          END_DATE: string;
+          LOCATION: string;
+          STATUS: string;
+          TOTAL_REGISTRATIONS: number;
+        }>
+      ).map(row => ({
+        id: row.ID,
+        NAME: row.NAME,
+        START_DATE: row.START_DATE,
+        END_DATE: row.END_DATE,
+        LOCATION: row.LOCATION,
+        STATUS: row.STATUS,
+        totalRegistrations: row.TOTAL_REGISTRATIONS,
+        attendees: row.TOTAL_REGISTRATIONS,
+      }));
+
+      // Mock attendance by event
+      const attendanceByEventData = [
+        { eventName: 'Hội nghị Công nghệ 2024', totalRegistrations: 450, attendanceRate: 87 },
+        { eventName: 'Workshop AI & ML', totalRegistrations: 120, attendanceRate: 92 },
+        { eventName: 'Seminar Khởi nghiệp', totalRegistrations: 200, attendanceRate: 78 },
+      ];
+
       return {
-        attendees: Number((attendees.rows as Array<{ CNT: number }>)[0]?.CNT || 0),
-        registrations: Number((registrations.rows as Array<{ CNT: number }>)[0]?.CNT || 0),
-        checkins: Number((checkins.rows as Array<{ CNT: number }>)[0]?.CNT || 0),
+        // Dashboard overview data
+        totalConferences,
+        totalAttendees,
+        totalCheckIns,
+        attendanceRate,
+        recentActivity,
+        upcomingEvents: upcomingEventsData,
+
+        // Realtime data
+        checkInsToday: Math.floor(totalCheckIns * 0.1), // Mock: 10% of total check-ins today
+        checkInsLast24h,
+        activeUsers: Math.floor(totalAttendees * 0.3), // Mock: 30% of attendees are active
+        systemAlerts,
+
+        // Additional data for charts
+        registrationTrends,
+        attendanceByEvent: attendanceByEventData,
       };
     });
     res.json(ok(data));

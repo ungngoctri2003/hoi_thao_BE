@@ -70,6 +70,41 @@ export const conferencesRepository = {
     });
   },
 
+  async listForAttendees(page: number, limit: number) {
+    const offset = (page - 1) * limit;
+    return withConn(async conn => {
+      const listRes = await conn.execute(
+        `SELECT * FROM (
+           SELECT t.*, ROWNUM rn FROM (
+             SELECT c.ID, c.NAME, c.DESCRIPTION, c.START_DATE, c.END_DATE, c.LOCATION, c.CATEGORY, c.ORGANIZER, c.CAPACITY, c.STATUS, c.CREATED_AT,
+                    NVL(reg.totalRegistrations, 0) as totalRegistrations
+             FROM CONFERENCES c
+             LEFT JOIN (
+               SELECT CONFERENCE_ID, COUNT(*) as totalRegistrations
+               FROM REGISTRATIONS
+               GROUP BY CONFERENCE_ID
+             ) reg ON c.ID = reg.CONFERENCE_ID
+             WHERE c.STATUS IN ('published', 'active', 'upcoming')
+             ORDER BY c.START_DATE ASC, c.CREATED_AT DESC
+           ) t WHERE ROWNUM <= :max_row
+         ) WHERE rn > :min_row`,
+        { max_row: offset + limit, min_row: offset },
+        {
+          outFormat: oracledb.OUT_FORMAT_OBJECT,
+          fetchInfo: { DESCRIPTION: { type: oracledb.STRING } },
+        }
+      );
+      const countRes = await conn.execute(
+        `SELECT COUNT(*) AS CNT FROM CONFERENCES WHERE STATUS IN ('published', 'active', 'upcoming')`,
+        {},
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
+      );
+      const rows = (listRes.rows as any[]) || [];
+      const total = Number((countRes.rows as Array<{ CNT: number }>)[0]?.CNT || 0);
+      return { rows: rows as ConferenceRow[], total };
+    });
+  },
+
   async findById(id: number): Promise<ConferenceRow | null> {
     return withConn(async conn => {
       const res = await conn.execute(
