@@ -7,13 +7,6 @@ import { roomsRepository } from '../../modules/venue/rooms.repository';
 
 // Helper function to safely clean room data and remove circular references
 function cleanRoomData(room: any) {
-  console.log('Cleaning room data:', {
-    hasRoom: !!room,
-    roomKeys: room ? Object.keys(room) : [],
-    roomType: typeof room,
-    roomConstructor: room?.constructor?.name,
-  });
-
   // Create a completely new object to avoid any circular references
   const cleanRoom: any = {};
 
@@ -34,12 +27,6 @@ function cleanRoomData(room: any) {
   properties.forEach(prop => {
     if (room?.[prop] !== undefined) {
       const value = room[prop];
-      console.log(`Processing property ${prop}:`, {
-        value,
-        type: typeof value,
-        isArray: Array.isArray(value),
-        constructor: value?.constructor?.name,
-      });
 
       // Only copy primitive values or safe arrays
       if (
@@ -68,11 +55,6 @@ function cleanRoomData(room: any) {
   } else {
     cleanRoom.FEATURES = [];
   }
-
-  console.log('Cleaned room result:', {
-    keys: Object.keys(cleanRoom),
-    hasCircular: hasCircularReference(cleanRoom),
-  });
 
   return cleanRoom;
 }
@@ -141,7 +123,6 @@ function deepClean(obj: any, seen = new WeakSet()): any {
           result[key] = null;
         }
       } catch (error) {
-        console.warn(`Error cleaning property ${key}:`, error);
         result[key] = null; // Use null instead of '[Error]' for React compatibility
       }
     }

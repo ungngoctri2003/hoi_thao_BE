@@ -651,7 +651,6 @@ export async function conferenceAIAnalytics(req: Request, res: Response, next: N
         };
         chatGPTInsights = await chatGPTService.generateConferenceInsights(conferenceData);
       } catch (error) {
-        console.error('Error generating ChatGPT insights for conference:', error);
         chatGPTInsights = {
           insights: [
             {
@@ -1041,7 +1040,6 @@ export async function globalAIAnalytics(req: Request, res: Response, next: NextF
       try {
         chatGPTInsights = await chatGPTService.generateAnalyticsInsights(analyticsData);
       } catch (error) {
-        console.error('Error generating ChatGPT insights:', error);
         // Fallback to basic insights
         chatGPTInsights = {
           insights: [

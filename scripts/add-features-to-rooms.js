@@ -71,12 +71,9 @@ async function addFeaturesToRooms() {
   let connection;
 
   try {
-    console.log('Connecting to database...');
     connection = await oracledb.getConnection(dbConfig);
-    console.log('Connected to database successfully');
 
     // Get all rooms
-    console.log('Fetching current room data...');
     const result = await connection.execute(
       `SELECT ID, NAME, CAPACITY, ROOM_TYPE FROM ROOMS ORDER BY ID`,
       {},
@@ -84,15 +81,11 @@ async function addFeaturesToRooms() {
     );
 
     const rooms = result.rows;
-    console.log(`Found ${rooms.length} rooms`);
 
     // Process each room
     for (const room of rooms) {
-      console.log(`\nProcessing room ${room.ID}: ${room.NAME}`);
-
       // Generate features for this room
       const features = getRoomFeatures(room.NAME, room.CAPACITY, room.ROOM_TYPE);
-      console.log('Generated features:', features);
 
       // Update the room with features
       const updateResult = await connection.execute(
@@ -103,31 +96,22 @@ async function addFeaturesToRooms() {
         },
         { autoCommit: false }
       );
-
-      console.log(`Updated room ${room.ID}, rows affected: ${updateResult.rowsAffected}`);
     }
 
     // Commit all changes
     await connection.commit();
-    console.log('\n✅ All changes committed successfully');
   } catch (error) {
     console.error('❌ Error adding features to rooms:', error);
     if (connection) {
       try {
         await connection.rollback();
-        console.log('Rolled back changes due to error');
-      } catch (rollbackError) {
-        console.error('Error during rollback:', rollbackError);
-      }
+      } catch (rollbackError) {}
     }
   } finally {
     if (connection) {
       try {
         await connection.close();
-        console.log('Database connection closed');
-      } catch (closeError) {
-        console.error('Error closing connection:', closeError);
-      }
+      } catch (closeError) {}
     }
   }
 }

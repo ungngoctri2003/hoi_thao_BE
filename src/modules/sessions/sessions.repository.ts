@@ -170,7 +170,6 @@ export const sessionsRepository = {
 
         return this.findById(sessionId);
       } catch (error) {
-        console.error('Error creating session:', error);
         throw error;
       }
     });
