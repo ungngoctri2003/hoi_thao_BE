@@ -12,48 +12,61 @@ export async function list(req: Request, res: Response, next: NextFunction) {
       email: req.query['filters[email]'],
       name: req.query['filters[name]'],
       company: req.query['filters[company]'],
-      gender: req.query['filters[gender]']
+      gender: req.query['filters[gender]'],
     } as any;
     const search = (req.query.search as string) || null;
     const { rows, total } = await attendeesRepository.list({ page, limit, filters, search });
     res.json(ok(rows, meta(page, limit, total)));
-  } catch (e) { next(e); }
+  } catch (e) {
+    next(e);
+  }
 }
 
 export async function getById(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const item = await attendeesRepository.findById(Number(req.params.id));
-    if (!item) res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Attendee not found' } });
+    if (!item)
+      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Attendee not found' } });
     res.json(ok(item));
-  } catch (e) { next(e); }
+  } catch (e) {
+    next(e);
+  }
 }
 
 export async function create(req: Request, res: Response, next: NextFunction) {
   try {
     const item = await attendeesRepository.create(req.body);
     res.status(201).json(ok(item));
-  } catch (e) { next(e); }
+  } catch (e) {
+    next(e);
+  }
 }
 
 export async function update(req: Request, res: Response, next: NextFunction) {
   try {
     const item = await attendeesRepository.update(Number(req.params.id), req.body);
     res.json(ok(item));
-  } catch (e) { next(e); }
+  } catch (e) {
+    next(e);
+  }
 }
 
 export async function remove(req: Request, res: Response, next: NextFunction) {
   try {
     await attendeesRepository.remove(Number(req.params.id));
     res.status(204).send();
-  } catch (e) { next(e); }
+  } catch (e) {
+    next(e);
+  }
 }
 
 export async function listRegistrations(req: Request, res: Response, next: NextFunction) {
   try {
     const rows = await attendeesRepository.listRegistrationsByAttendee(Number(req.params.id));
     res.json(ok(rows));
-  } catch (e) { next(e); }
+  } catch (e) {
+    next(e);
+  }
 }
 
 export async function search(req: Request, res: Response, next: NextFunction) {
@@ -61,50 +74,56 @@ export async function search(req: Request, res: Response, next: NextFunction) {
     const q = String(req.query.q || '');
     const rows = await attendeesRepository.search(q, Number(req.query.limit || 10));
     res.json(ok(rows));
-  } catch (e) { next(e); }
+  } catch (e) {
+    next(e);
+  }
 }
 
 export async function updateMe(req: Request, res: Response, next: NextFunction) {
   try {
     const email = req.user!.email;
     const attendee = await attendeesRepository.findByEmail(email);
-    
+
     if (!attendee) {
       res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Attendee not found' } });
       return;
     }
-    
+
     const updatedAttendee = await attendeesRepository.update(attendee.ID, req.body);
     res.json(ok(updatedAttendee));
-  } catch (e) { next(e); }
+  } catch (e) {
+    next(e);
+  }
 }
 
 export async function createRegistration(req: Request, res: Response, next: NextFunction) {
   try {
     const attendeeId = Number(req.params.id);
     const { conferenceId } = req.body;
-    
+
     if (!conferenceId) {
-      res.status(400).json({ error: { code: 'MISSING_CONFERENCE_ID', message: 'Conference ID is required' } });
+      res
+        .status(400)
+        .json({ error: { code: 'MISSING_CONFERENCE_ID', message: 'Conference ID is required' } });
       return;
     }
-    
+
     // Check if attendee exists
     const attendee = await attendeesRepository.findById(attendeeId);
     if (!attendee) {
       res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Attendee not found' } });
       return;
     }
-    
+
     // Create registration
     const registration = await registrationsRepository.create({
       ATTENDEE_ID: attendeeId,
-      CONFERENCE_ID: conferenceId
+      CONFERENCE_ID: conferenceId,
     });
-    
+
     res.status(201).json(ok(registration));
-  } catch (e) { 
-    next(e); 
+  } catch (e) {
+    next(e);
   }
 }
 
@@ -112,13 +131,41 @@ export async function listByConference(req: Request, res: Response, next: NextFu
   try {
     const { page, limit } = parsePagination(req.query);
     const conferenceId = Number(req.params.conferenceId);
-    const { rows, total } = await attendeesRepository.listByConference(conferenceId, { page, limit });
+    const { rows, total } = await attendeesRepository.listByConference(conferenceId, {
+      page,
+      limit,
+    });
     res.json(ok(rows, meta(page, limit, total)));
-  } catch (e) { next(e); }
+  } catch (e) {
+    next(e);
+  }
 }
 
+export async function listWithConferences(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { page, limit } = parsePagination(req.query);
+    const filters = {
+      email: req.query['filters[email]'],
+      name: req.query['filters[name]'],
+      company: req.query['filters[company]'],
+      gender: req.query['filters[gender]'],
+      conferenceId: req.query['filters[conferenceId]'],
+      checkinStatus: req.query['filters[checkinStatus]'],
+    } as any;
+    const search = (req.query.search as string) || null;
+    const includeConferences = req.query.includeConferences === 'true';
+    const includeRegistrations = req.query.includeRegistrations === 'true';
 
-
-
-
-
+    const { rows, total } = await attendeesRepository.listWithConferences({
+      page,
+      limit,
+      filters,
+      search,
+      includeConferences,
+      includeRegistrations,
+    });
+    res.json(ok(rows, meta(page, limit, total)));
+  } catch (e) {
+    next(e);
+  }
+}

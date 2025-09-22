@@ -353,3 +353,73 @@ testRouter.patch('/test-session-update-dates/:id', async (req, res) => {
     });
   }
 });
+
+// Test attendees with conferences endpoint without authentication
+testRouter.get('/test-attendees-with-conferences', async (req, res) => {
+  try {
+    const { attendeesRepository } = require('../../modules/attendees/attendees.repository');
+
+    console.log('Testing attendees with conferences endpoint...');
+
+    const { page, limit } = {
+      page: Number(req.query.page) || 1,
+      limit: Number(req.query.limit) || 20,
+    };
+
+    const filters = {
+      email: req.query['filters[email]'],
+      name: req.query['filters[name]'],
+      company: req.query['filters[company]'],
+      gender: req.query['filters[gender]'],
+      conferenceId: req.query['filters[conferenceId]'],
+      checkinStatus: req.query['filters[checkinStatus]'],
+    } as any;
+
+    const search = (req.query.search as string) || null;
+    const includeConferences = req.query.includeConferences === 'true';
+    const includeRegistrations = req.query.includeRegistrations === 'true';
+
+    console.log('Query parameters:', {
+      page,
+      limit,
+      filters,
+      search,
+      includeConferences,
+      includeRegistrations,
+    });
+
+    const { rows, total } = await attendeesRepository.listWithConferences({
+      page,
+      limit,
+      filters,
+      search,
+      includeConferences,
+      includeRegistrations,
+    });
+
+    console.log('Query results:', {
+      rowCount: rows.length,
+      total,
+      firstRow: rows[0] ? Object.keys(rows[0]) : 'no rows',
+    });
+
+    res.json({
+      success: true,
+      message: 'Attendees with conferences query successful',
+      data: rows,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    console.error('Test attendees with conferences error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      stack: error.stack,
+    });
+  }
+});
