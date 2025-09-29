@@ -10,10 +10,10 @@ export const registrationsRouter = Router();
 registrationsRouter.post('/public', publicRegistration);
 
 registrationsRouter.get('/', auth(), rbac('registrations.read'), list);
-registrationsRouter.post('/', auth(), rbac('registrations.write'), audit('conference', 'create', 'registration'), create);
+registrationsRouter.post('/', auth(), rbac('checkin.manage'), audit('conference', 'create', 'registration'), create);
 registrationsRouter.get('/:id', auth(), rbac('registrations.read'), getById);
-registrationsRouter.patch('/:id', auth(), rbac('registrations.write'), audit('conference', 'update', 'registration'), update);
-registrationsRouter.delete('/:id', auth(), rbac('registrations.write'), audit('conference', 'delete', 'registration'), remove);
+registrationsRouter.patch('/:id', auth(), rbac('checkin.manage'), audit('conference', 'update', 'registration'), update);
+registrationsRouter.delete('/:id', auth(), rbac('checkin.manage'), audit('conference', 'delete', 'registration'), remove);
 
 // Checkin/Checkout endpoints (using checkin.manage permission instead of registrations.write)
 registrationsRouter.post('/:id/checkin', auth(), rbac('checkin.manage'), audit('conference', 'checkin', 'registration'), checkin);

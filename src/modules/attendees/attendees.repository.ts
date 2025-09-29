@@ -427,7 +427,9 @@ export const attendeesRepository = {
       let joinClause = `LEFT JOIN REGISTRATIONS r ON a.ID = r.ATTENDEE_ID`;
 
       if (includeConferences) {
-        joinClause += ` LEFT JOIN CONFERENCES c ON r.CONFERENCE_ID = c.ID`;
+        // Only join conferences that the attendee is actually registered for
+        // Use INNER JOIN to ensure we only get conferences with valid registrations
+        joinClause += ` INNER JOIN CONFERENCES c ON r.CONFERENCE_ID = c.ID`;
       }
 
       // If conference filter is applied, use INNER JOIN for registrations
@@ -435,32 +437,56 @@ export const attendeesRepository = {
         joinClause = joinClause.replace('LEFT JOIN REGISTRATIONS', 'INNER JOIN REGISTRATIONS');
       }
 
-      // Build the complete query
-      const baseQuery = `
-        SELECT ${selectFields}
-        ${fromClause}
-        ${joinClause}
-        WHERE ${where}
-        ORDER BY a.CREATED_AT DESC
+      // First, get the paginated attendee IDs
+      const attendeeIdsQuery = `
+        SELECT attendee_id FROM (
+          SELECT attendee_id, ROWNUM rn FROM (
+            SELECT DISTINCT a.ID as attendee_id, a.CREATED_AT
+            FROM ATTENDEES a
+            LEFT JOIN REGISTRATIONS r ON a.ID = r.ATTENDEE_ID
+            ${includeConferences ? 'INNER JOIN CONFERENCES c ON r.CONFERENCE_ID = c.ID' : ''}
+            WHERE ${where}
+            ORDER BY a.CREATED_AT DESC
+          ) WHERE ROWNUM <= :maxRow
+        ) WHERE rn > :minRow
       `;
 
-      // Use Oracle's ROWNUM for pagination
-      const listRes = await conn.execute(
-        `SELECT * FROM (
-           SELECT t.*, ROWNUM rn FROM (
-             ${baseQuery}
-           ) t WHERE ROWNUM <= :maxRow
-         ) WHERE rn > :minRow`,
+      const attendeeIdsRes = await conn.execute(attendeeIdsQuery, 
         { ...binds, maxRow: offset + limit, minRow: offset },
         { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
 
-      // Count query
+      const attendeeIds = (attendeeIdsRes.rows as any[])?.map(row => row.ATTENDEE_ID) || [];
+      
+      if (attendeeIds.length === 0) {
+        return { rows: [], total: 0 };
+      }
+
+      // Now get the full data for these specific attendees
+      const attendeeIdsPlaceholder = attendeeIds.map((_, index) => `:attendeeId${index}`).join(',');
+      const attendeeIdsBinds = attendeeIds.reduce((acc, id, index) => {
+        acc[`attendeeId${index}`] = id;
+        return acc;
+      }, {} as any);
+
+      const baseQuery = `
+        SELECT ${selectFields}
+        ${fromClause}
+        ${joinClause}
+        WHERE a.ID IN (${attendeeIdsPlaceholder})
+        ORDER BY a.CREATED_AT DESC
+      `;
+
+      const listRes = await conn.execute(baseQuery, attendeeIdsBinds, {
+        outFormat: oracledb.OUT_FORMAT_OBJECT
+      });
+
+      // Count query - use the same logic as the main query
       const countQuery = `
         SELECT COUNT(DISTINCT a.ID) AS CNT 
         FROM ATTENDEES a
         LEFT JOIN REGISTRATIONS r ON a.ID = r.ATTENDEE_ID
-        ${includeConferences ? 'LEFT JOIN CONFERENCES c ON r.CONFERENCE_ID = c.ID' : ''}
+        ${includeConferences ? 'INNER JOIN CONFERENCES c ON r.CONFERENCE_ID = c.ID' : ''}
         WHERE ${where}
       `;
 
@@ -470,6 +496,13 @@ export const attendeesRepository = {
 
       const rows = (listRes.rows as any[]) || [];
       const total = Number((countRes.rows as Array<{ CNT: number }>)[0]?.CNT || 0);
+
+      console.log('🔍 Backend Debug - Raw query results:', {
+        totalRows: rows.length,
+        sampleRow: rows[0],
+        includeConferences,
+        includeRegistrations
+      });
 
       // Process the results to group by attendee
       const attendeeMap = new Map();
@@ -514,7 +547,15 @@ export const attendeesRepository = {
           }
         }
 
-        if (includeConferences && row.CONFERENCE_ID) {
+        if (includeConferences && row.CONFERENCE_ID && row.REGISTRATION_ID) {
+          // Only add conference if there's a valid registration (attendee is actually registered)
+          console.log(`🔍 Adding conference to attendee ${attendeeId}:`, {
+            conferenceId: row.CONFERENCE_ID,
+            conferenceName: row.CONFERENCE_NAME,
+            registrationId: row.REGISTRATION_ID,
+            registrationStatus: row.REGISTRATION_STATUS
+          });
+
           // Handle CLOB objects properly - for now, just set a placeholder
           // since the main issue (circular reference) is already fixed
           let description = null;
@@ -542,11 +583,24 @@ export const attendeesRepository = {
           const existingConf = attendee.conferences.find((c: any) => c.ID === conference.ID);
           if (!existingConf) {
             attendee.conferences.push(conference);
+            console.log(`✅ Added conference ${conference.NAME} to attendee ${attendeeId}`);
+          } else {
+            console.log(`⚠️ Conference ${conference.NAME} already exists for attendee ${attendeeId}`);
           }
+        } else if (includeConferences && row.CONFERENCE_ID && !row.REGISTRATION_ID) {
+          console.log(`❌ Skipping conference ${row.CONFERENCE_NAME} for attendee ${attendeeId} - no registration`);
         }
       });
 
       const processedRows = Array.from(attendeeMap.values());
+
+      console.log('🔍 Backend Debug - Processed attendees:', processedRows.map(attendee => ({
+        id: attendee.ID,
+        name: attendee.NAME,
+        conferencesCount: attendee.conferences.length,
+        conferences: attendee.conferences.map((c: any) => c.NAME),
+        registrationsCount: attendee.registrations.length
+      })));
 
       // Serialize data to avoid circular references and ensure clean JSON structure
       const serializedRows = processedRows.map(attendee => {
