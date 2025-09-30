@@ -173,7 +173,8 @@ export async function publicRegistration(req: Request, res: Response, next: Next
       DIETARY: dietary,
       SPECIAL_NEEDS: specialNeeds,
       DATE_OF_BIRTH: dateOfBirth ? new Date(dateOfBirth) : null,
-      GENDER: gender
+      GENDER: gender,
+      FIREBASE_UID: null
     });
 
     // Step 3: Create registration if conference is selected
