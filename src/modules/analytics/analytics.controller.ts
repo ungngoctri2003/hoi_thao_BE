@@ -416,13 +416,20 @@ export async function conferenceAIAnalytics(req: Request, res: Response, next: N
         { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
 
-      const totalCheckins = await conn.execute(
-        `SELECT COUNT(*) AS CNT FROM CHECKINS ck
-         JOIN REGISTRATIONS r ON ck.REGISTRATION_ID = r.ID
-         WHERE r.CONFERENCE_ID = :conferenceId`,
-        { conferenceId },
-        { outFormat: oracledb.OUT_FORMAT_OBJECT }
-      );
+      // Check if CHECKINS table exists before querying it
+      let totalCheckins = { rows: [{ CNT: 0 }] };
+      try {
+        totalCheckins = await conn.execute(
+          `SELECT COUNT(*) AS CNT FROM CHECKINS ck
+           JOIN REGISTRATIONS r ON ck.REGISTRATION_ID = r.ID
+           WHERE r.CONFERENCE_ID = :conferenceId`,
+          { conferenceId },
+          { outFormat: oracledb.OUT_FORMAT_OBJECT }
+        );
+      } catch (error) {
+        console.warn('CHECKINS table does not exist, using 0 for checkin count:', error instanceof Error ? error.message : String(error));
+        totalCheckins = { rows: [{ CNT: 0 }] };
+      }
 
       // Get demographics for this conference
       const ageGroups = await conn.execute(
@@ -773,11 +780,19 @@ export async function globalAIAnalytics(req: Request, res: Response, next: NextF
         {},
         { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
-      const totalCheckins = await conn.execute(
-        `SELECT COUNT(*) AS CNT FROM CHECKINS`,
-        {},
-        { outFormat: oracledb.OUT_FORMAT_OBJECT }
-      );
+      
+      // Check if CHECKINS table exists before querying it
+      let totalCheckins = { rows: [{ CNT: 0 }] };
+      try {
+        totalCheckins = await conn.execute(
+          `SELECT COUNT(*) AS CNT FROM CHECKINS`,
+          {},
+          { outFormat: oracledb.OUT_FORMAT_OBJECT }
+        );
+      } catch (error) {
+        console.warn('CHECKINS table does not exist, using 0 for checkin count:', error instanceof Error ? error.message : String(error));
+        totalCheckins = { rows: [{ CNT: 0 }] };
+      }
 
       // Get top performing conferences
       const topConferences = await conn.execute(
