@@ -50,13 +50,13 @@ export const sessionsRepository = {
   async list(confId: number, filters: { status?: string; roomId?: number } | undefined) {
     return withConn(async conn => {
       const binds: any = { confId };
-      let where = 'CONFERENCE_ID = :confId';
+      let where = 's.CONFERENCE_ID = :confId';
       if (filters?.status) {
-        where += ' AND STATUS = :status';
+        where += ' AND s.STATUS = :status';
         binds.status = filters.status;
       }
       if (filters?.roomId) {
-        where += ' AND ROOM_ID = :roomId';
+        where += ' AND s.ROOM_ID = :roomId';
         binds.roomId = filters.roomId;
       }
       const res = await conn.execute(
@@ -81,11 +81,11 @@ export const sessionsRepository = {
       const binds: any = {};
       let where = '1=1';
       if (filters?.conferenceId) {
-        where += ' AND CONFERENCE_ID = :confId';
+        where += ' AND s.CONFERENCE_ID = :confId';
         binds.confId = filters.conferenceId;
       }
       if (filters?.status) {
-        where += ' AND STATUS = :status';
+        where += ' AND s.STATUS = :status';
         binds.status = filters.status;
       }
       const res = await conn.execute(
