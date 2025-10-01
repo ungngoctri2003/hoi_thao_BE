@@ -97,6 +97,19 @@ export const registrationsRepository = {
     });
   },
 
+  async updateQrCode(id: number, qrCode: string) {
+    return withConn(async (conn) => {
+      await conn.execute(`UPDATE REGISTRATIONS SET QR_CODE = :qrCode WHERE ID = :id`, { qrCode, id }, { autoCommit: true });
+      const res = await conn.execute(
+        `SELECT ID, ATTENDEE_ID, CONFERENCE_ID, REGISTRATION_DATE, STATUS, QR_CODE FROM REGISTRATIONS WHERE ID = :id`,
+        { id },
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
+      );
+      const rows = (res.rows as any[]) || [];
+      return (rows[0] as RegistrationRow) || null;
+    });
+  },
+
   async remove(id: number) {
     return withConn(async (conn) => {
       await conn.execute(`DELETE FROM REGISTRATIONS WHERE ID = :id`, { id }, { autoCommit: true });
