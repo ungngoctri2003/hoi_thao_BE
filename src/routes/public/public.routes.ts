@@ -130,7 +130,7 @@ publicRouter.post(
 
 publicRouter.post('/checkins/checkin', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { attendeeId, qrCode, conferenceId, checkInMethod, attendeeInfo, sessionId } = req.body;
+    const { attendeeId, qrCode, conferenceId, checkInMethod, attendeeInfo, sessionId, actionType } = req.body;
 
     if (!conferenceId) {
       res.status(400).json({
@@ -142,12 +142,15 @@ publicRouter.post('/checkins/checkin', async (req: Request, res: Response, next:
       return;
     }
 
+    // Validate actionType
+    const action = (actionType === 'checkout' ? 'checkout' : 'checkin') as 'checkin' | 'checkout';
+
     let result;
 
     if (checkInMethod === 'qr' && qrCode) {
-      // QR code check-in
+      // QR code check-in/checkout
       try {
-        result = await checkinsRepository.scanByQr(qrCode, sessionId ? Number(sessionId) : null);
+        result = await checkinsRepository.scanByQr(qrCode, sessionId ? Number(sessionId) : null, action);
         } catch (error: any) {
           // If registration not found, try to create one from QR data
           if (error.message === 'Registration not found') {
@@ -226,7 +229,7 @@ publicRouter.post('/checkins/checkin', async (req: Request, res: Response, next:
           const sessionIdFromQr = qrData.session ? Number(qrData.session) : null;
           
           // Now try scanByQr again with the QR code we stored
-          result = await checkinsRepository.scanByQr(qrCodeToUse, sessionId ? Number(sessionId) : sessionIdFromQr);
+          result = await checkinsRepository.scanByQr(qrCodeToUse, sessionId ? Number(sessionId) : sessionIdFromQr, action);
         } else {
           throw error;
         }
@@ -264,7 +267,7 @@ publicRouter.post('/checkins/checkin', async (req: Request, res: Response, next:
         return;
       }
 
-      result = await checkinsRepository.manual(registration.ID, sessionId ? Number(sessionId) : null);
+      result = await checkinsRepository.manual(registration.ID, sessionId ? Number(sessionId) : null, action);
     } else if (attendeeInfo) {
       // Create new attendee first
       const newAttendee = await attendeesRepository.create({
@@ -310,7 +313,7 @@ publicRouter.post('/checkins/checkin', async (req: Request, res: Response, next:
       }
 
       // Perform manual check-in
-      result = await checkinsRepository.manual(registration.ID, sessionId ? Number(sessionId) : null);
+      result = await checkinsRepository.manual(registration.ID, sessionId ? Number(sessionId) : null, action);
     } else {
       res.status(400).json({
         error: {
