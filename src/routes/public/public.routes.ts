@@ -249,7 +249,7 @@ publicRouter.post('/checkins/checkin', async (req: Request, res: Response, next:
         res.status(404).json({
           error: {
             code: 'REGISTRATION_NOT_FOUND',
-            message: 'No registration found for this attendee and conference',
+            message: 'Không tìm thấy đăng ký cho tham dự viên này trong hội nghị',
           },
         });
         return;
@@ -261,12 +261,123 @@ publicRouter.post('/checkins/checkin', async (req: Request, res: Response, next:
         res.status(404).json({
           error: {
             code: 'REGISTRATION_NOT_FOUND',
-            message: 'No registration found for this attendee and conference',
+            message: 'Không tìm thấy đăng ký cho tham dự viên này trong hội nghị',
           },
         });
         return;
       }
 
+      result = await checkinsRepository.manual(registration.ID, sessionId ? Number(sessionId) : null, action);
+    } else if (checkInMethod === 'manual' && attendeeInfo && qrCode) {
+      // Manual check-in with email and QR code validation
+      console.log('Manual check-in with validation:', { email: attendeeInfo.email, qrCode, conferenceId });
+
+      // Step 1: Find attendee by QR code and conference
+      const attendeeFromQR = await attendeesRepository.findByQRCodeAndConference(qrCode, Number(conferenceId));
+
+      if (!attendeeFromQR) {
+        res.status(404).json({
+          error: {
+            code: 'QR_CODE_NOT_FOUND',
+            message: 'Mã QR không hợp lệ hoặc không tồn tại trong hội nghị đã chọn',
+          },
+        });
+        return;
+      }
+
+      // Step 2: Validate email matches the attendee from QR code
+      const attendeeEmail = attendeeFromQR.EMAIL?.toLowerCase().trim();
+      const inputEmail = attendeeInfo.email?.toLowerCase().trim();
+
+      if (attendeeEmail !== inputEmail) {
+        res.status(400).json({
+          error: {
+            code: 'EMAIL_MISMATCH',
+            message: 'Email không khớp với mã QR. Vui lòng kiểm tra lại thông tin.',
+          },
+        });
+        return;
+      }
+
+      // Step 3: Find registration for this attendee and conference
+      const registrations = await registrationsRepository.list({
+        attendeeId: attendeeFromQR.ID,
+        conferenceId: Number(conferenceId),
+        page: 1,
+        limit: 1,
+      });
+
+      if (!registrations.rows || registrations.rows.length === 0) {
+        res.status(404).json({
+          error: {
+            code: 'REGISTRATION_NOT_FOUND',
+            message: 'Không tìm thấy đăng ký cho tham dự viên này trong hội nghị',
+          },
+        });
+        return;
+      }
+
+      const registration = registrations.rows[0];
+
+      if (!registration) {
+        res.status(404).json({
+          error: {
+            code: 'REGISTRATION_NOT_FOUND',
+            message: 'Không tìm thấy đăng ký cho tham dự viên này trong hội nghị',
+          },
+        });
+        return;
+      }
+
+      // Step 4: Check current check-in status using attendeeId
+      const existingCheckins = await checkinsRepository.list({
+        attendeeId: attendeeFromQR.ID,
+        conferenceId: Number(conferenceId),
+        page: 1,
+        limit: 100,
+      });
+
+      // Find the latest successful check-in/checkout for this registration
+      const successfulCheckins = existingCheckins.rows.filter((c: any) => c.STATUS === 'success');
+      const latestCheckin = successfulCheckins.length > 0 
+        ? successfulCheckins.sort((a: any, b: any) => {
+            const timeA = new Date(a.CHECKIN_TIME).getTime();
+            const timeB = new Date(b.CHECKIN_TIME).getTime();
+            return timeB - timeA;
+          })[0]
+        : null;
+
+      const isCurrentlyCheckedIn = latestCheckin && latestCheckin.ACTION_TYPE !== 'checkout';
+
+      console.log('Check-in status:', {
+        registrationId: registration.ID,
+        latestCheckin,
+        isCurrentlyCheckedIn,
+        attemptingAction: action,
+      });
+
+      // Step 5: Validate action based on current status
+      if (action === 'checkin' && isCurrentlyCheckedIn) {
+        res.status(400).json({
+          error: {
+            code: 'ALREADY_CHECKED_IN',
+            message: 'Mã QR này đã được check-in rồi. Vui lòng sử dụng chức năng check-out nếu muốn rời khỏi.',
+          },
+        });
+        return;
+      }
+
+      if (action === 'checkout' && !isCurrentlyCheckedIn) {
+        res.status(400).json({
+          error: {
+            code: 'NOT_CHECKED_IN',
+            message: 'Mã này đã được check-out!',
+          },
+        });
+        return;
+      }
+
+      // Step 6: All validations passed, perform check-in/checkout
       result = await checkinsRepository.manual(registration.ID, sessionId ? Number(sessionId) : null, action);
     } else if (attendeeInfo) {
       // Create new attendee first

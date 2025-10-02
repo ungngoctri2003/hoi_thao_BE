@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { auth } from '../../middlewares/auth';
 import { rbac } from '../../middlewares/rbac';
 import { audit } from '../../middlewares/audit';
-import { list, getById, create, update, remove, publicRegistration, checkin, checkout } from '../../modules/registrations/registrations.controller';
+import { list, getById, create, update, remove, publicRegistration, checkin, checkout, approveRegistration, rejectRegistration } from '../../modules/registrations/registrations.controller';
 
 export const registrationsRouter = Router();
 
@@ -18,6 +18,10 @@ registrationsRouter.delete('/:id', auth(), rbac('checkin.manage'), audit('confer
 // Checkin/Checkout endpoints (using checkin.manage permission instead of registrations.write)
 registrationsRouter.post('/:id/checkin', auth(), rbac('checkin.manage'), audit('conference', 'checkin', 'registration'), checkin);
 registrationsRouter.post('/:id/checkout', auth(), rbac('checkin.manage'), audit('conference', 'checkout', 'registration'), checkout);
+
+// Approve/Reject endpoints for pending registrations (requires checkin.manage permission)
+registrationsRouter.post('/:id/approve', auth(), rbac('checkin.manage'), audit('conference', 'approve', 'registration'), approveRegistration);
+registrationsRouter.post('/:id/reject', auth(), rbac('checkin.manage'), audit('conference', 'reject', 'registration'), rejectRegistration);
 
 
 

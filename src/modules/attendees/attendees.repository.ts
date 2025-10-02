@@ -423,6 +423,10 @@ export const attendeesRepository = {
                         c.CREATED_AT as CONFERENCE_CREATED_AT`;
       }
 
+      // Add session check-in fields
+      selectFields += `, ch.ID as CHECKIN_ID, ch.SESSION_ID, ch.CHECKIN_TIME, ch.ACTION_TYPE, ch.METHOD as CHECKIN_METHOD, 
+                      s.TITLE as SESSION_TITLE, s.START_TIME as SESSION_START_TIME, s.END_TIME as SESSION_END_TIME, s.STATUS as SESSION_STATUS`;
+
       let fromClause = `FROM ATTENDEES a`;
       let joinClause = `LEFT JOIN REGISTRATIONS r ON a.ID = r.ATTENDEE_ID`;
 
@@ -431,6 +435,10 @@ export const attendeesRepository = {
         // Use INNER JOIN to ensure we only get conferences with valid registrations
         joinClause += ` INNER JOIN CONFERENCES c ON r.CONFERENCE_ID = c.ID`;
       }
+
+      // Add joins for session check-ins
+      joinClause += ` LEFT JOIN CHECKINS ch ON r.ID = ch.REGISTRATION_ID`;
+      joinClause += ` LEFT JOIN SESSIONS s ON ch.SESSION_ID = s.ID`;
 
       // If conference filter is applied, use INNER JOIN for registrations
       if (filters?.conferenceId) {
@@ -526,6 +534,7 @@ export const attendeesRepository = {
             CREATED_AT: row.CREATED_AT,
             conferences: [],
             registrations: [],
+            sessionCheckins: [],
           });
         }
 
@@ -544,6 +553,28 @@ export const attendeesRepository = {
           const existingReg = attendee.registrations.find((r: any) => r.ID === registration.ID);
           if (!existingReg) {
             attendee.registrations.push(registration);
+          }
+        }
+
+        // Add session check-ins
+        if (row.CHECKIN_ID && row.SESSION_ID) {
+          const sessionCheckin = {
+            ID: row.CHECKIN_ID,
+            SESSION_ID: row.SESSION_ID,
+            CHECKIN_TIME: row.CHECKIN_TIME,
+            ACTION_TYPE: row.ACTION_TYPE,
+            METHOD: row.CHECKIN_METHOD,
+            SESSION_TITLE: row.SESSION_TITLE,
+            SESSION_START_TIME: row.SESSION_START_TIME,
+            SESSION_END_TIME: row.SESSION_END_TIME,
+            SESSION_STATUS: row.SESSION_STATUS,
+            CONFERENCE_ID: row.REGISTRATION_CONFERENCE_ID,
+          };
+
+          // Check if this session check-in already exists
+          const existingCheckin = attendee.sessionCheckins.find((sc: any) => sc.ID === sessionCheckin.ID);
+          if (!existingCheckin) {
+            attendee.sessionCheckins.push(sessionCheckin);
           }
         }
 

@@ -7,8 +7,10 @@ export type RegistrationRow = {
   ATTENDEE_ID: number;
   CONFERENCE_ID: number;
   REGISTRATION_DATE: Date;
-  STATUS: 'registered' | 'checked-in' | 'checked-out' | 'cancelled' | 'no-show';
+  STATUS: 'pending' | 'registered' | 'checked-in' | 'checked-out' | 'cancelled' | 'no-show';
   QR_CODE: string | null;
+  APPROVED_BY?: number | null;
+  APPROVED_AT?: Date | null;
 };
 
 export const registrationsRepository = {
@@ -53,23 +55,24 @@ export const registrationsRepository = {
     });
   },
 
-  async create(data: { ATTENDEE_ID: number; CONFERENCE_ID: number; }) {
+  async create(data: { ATTENDEE_ID: number; CONFERENCE_ID: number; STATUS?: RegistrationRow['STATUS'] }) {
     return withTransaction(async (conn) => {
       // Generate unique QR, retry on conflict
+      const status = data.STATUS || 'pending'; // Default to 'pending' for new registrations
       for (let i = 0; i < 5; i++) {
         const qr = generateRegistrationQr(data.CONFERENCE_ID, data.ATTENDEE_ID);
         try {
           const res = await conn.execute(
             `INSERT INTO REGISTRATIONS (ATTENDEE_ID, CONFERENCE_ID, STATUS, QR_CODE)
-             VALUES (:ATTENDEE_ID, :CONFERENCE_ID, 'registered', :QR_CODE)
+             VALUES (:ATTENDEE_ID, :CONFERENCE_ID, :STATUS, :QR_CODE)
              RETURNING ID INTO :ID`,
-            { ...data, QR_CODE: qr, ID: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER } }
+            { ATTENDEE_ID: data.ATTENDEE_ID, CONFERENCE_ID: data.CONFERENCE_ID, STATUS: status, QR_CODE: qr, ID: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER } }
           );
           const id = (res.outBinds as { ID: number[] }).ID[0];
           if (!id) throw new Error('Failed to get created registration ID');
           
           const created = await conn.execute(
-            `SELECT ID, ATTENDEE_ID, CONFERENCE_ID, REGISTRATION_DATE, STATUS, QR_CODE FROM REGISTRATIONS WHERE ID = :id`,
+            `SELECT ID, ATTENDEE_ID, CONFERENCE_ID, REGISTRATION_DATE, STATUS, QR_CODE, APPROVED_BY, APPROVED_AT FROM REGISTRATIONS WHERE ID = :id`,
             { id },
             { outFormat: oracledb.OUT_FORMAT_OBJECT }
           );
@@ -121,6 +124,50 @@ export const registrationsRepository = {
       const res = await conn.execute(
         `SELECT ID, ATTENDEE_ID, CONFERENCE_ID, REGISTRATION_DATE, STATUS, QR_CODE FROM REGISTRATIONS WHERE QR_CODE = :qr`,
         { qr },
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
+      );
+      const rows = (res.rows as any[]) || [];
+      return (rows[0] as RegistrationRow) || null;
+    });
+  },
+
+  async approve(id: number, approvedBy: number): Promise<RegistrationRow | null> {
+    return withConn(async (conn) => {
+      const now = new Date();
+      await conn.execute(
+        `UPDATE REGISTRATIONS 
+         SET STATUS = 'registered', APPROVED_BY = :approvedBy, APPROVED_AT = :approvedAt 
+         WHERE ID = :id AND STATUS = 'pending'`,
+        { id, approvedBy, approvedAt: now },
+        { autoCommit: true }
+      );
+      
+      const res = await conn.execute(
+        `SELECT ID, ATTENDEE_ID, CONFERENCE_ID, REGISTRATION_DATE, STATUS, QR_CODE, APPROVED_BY, APPROVED_AT 
+         FROM REGISTRATIONS WHERE ID = :id`,
+        { id },
+        { outFormat: oracledb.OUT_FORMAT_OBJECT }
+      );
+      const rows = (res.rows as any[]) || [];
+      return (rows[0] as RegistrationRow) || null;
+    });
+  },
+
+  async reject(id: number, approvedBy: number): Promise<RegistrationRow | null> {
+    return withConn(async (conn) => {
+      const now = new Date();
+      await conn.execute(
+        `UPDATE REGISTRATIONS 
+         SET STATUS = 'cancelled', APPROVED_BY = :approvedBy, APPROVED_AT = :approvedAt 
+         WHERE ID = :id AND STATUS = 'pending'`,
+        { id, approvedBy, approvedAt: now },
+        { autoCommit: true }
+      );
+      
+      const res = await conn.execute(
+        `SELECT ID, ATTENDEE_ID, CONFERENCE_ID, REGISTRATION_DATE, STATUS, QR_CODE, APPROVED_BY, APPROVED_AT 
+         FROM REGISTRATIONS WHERE ID = :id`,
+        { id },
         { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
       const rows = (res.rows as any[]) || [];

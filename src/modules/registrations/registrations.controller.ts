@@ -196,6 +196,100 @@ export async function publicRegistration(req: Request, res: Response, next: Next
   }
 }
 
+export async function approveRegistration(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const registrationId = Number(req.params.id);
+    const userId = (req as any).user?.id; // Get the user ID from the authenticated request
+    
+    if (!userId) {
+      res.status(401).json({ 
+        error: { 
+          code: 'UNAUTHORIZED', 
+          message: 'User not authenticated' 
+        } 
+      });
+      return;
+    }
+
+    // Check if registration exists
+    const registration = await registrationsRepository.findById(registrationId);
+    if (!registration) {
+      res.status(404).json({ 
+        error: { 
+          code: 'NOT_FOUND', 
+          message: 'Registration not found' 
+        } 
+      });
+      return;
+    }
+
+    // Check if registration is pending
+    if (registration.STATUS !== 'pending') {
+      res.status(400).json({ 
+        error: { 
+          code: 'INVALID_STATUS', 
+          message: `Registration is already ${registration.STATUS}. Only pending registrations can be approved.` 
+        } 
+      });
+      return;
+    }
+
+    // Approve the registration
+    const updatedRegistration = await registrationsRepository.approve(registrationId, userId);
+    
+    res.json(ok(updatedRegistration));
+  } catch (e) { 
+    next(e); 
+  }
+}
+
+export async function rejectRegistration(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const registrationId = Number(req.params.id);
+    const userId = (req as any).user?.id; // Get the user ID from the authenticated request
+    
+    if (!userId) {
+      res.status(401).json({ 
+        error: { 
+          code: 'UNAUTHORIZED', 
+          message: 'User not authenticated' 
+        } 
+      });
+      return;
+    }
+
+    // Check if registration exists
+    const registration = await registrationsRepository.findById(registrationId);
+    if (!registration) {
+      res.status(404).json({ 
+        error: { 
+          code: 'NOT_FOUND', 
+          message: 'Registration not found' 
+        } 
+      });
+      return;
+    }
+
+    // Check if registration is pending
+    if (registration.STATUS !== 'pending') {
+      res.status(400).json({ 
+        error: { 
+          code: 'INVALID_STATUS', 
+          message: `Registration is already ${registration.STATUS}. Only pending registrations can be rejected.` 
+        } 
+      });
+      return;
+    }
+
+    // Reject the registration
+    const updatedRegistration = await registrationsRepository.reject(registrationId, userId);
+    
+    res.json(ok(updatedRegistration));
+  } catch (e) { 
+    next(e); 
+  }
+}
+
 
 
 
