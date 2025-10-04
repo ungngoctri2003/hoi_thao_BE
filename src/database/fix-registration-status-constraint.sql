@@ -80,3 +80,6 @@ WHERE table_name = 'REGISTRATIONS' AND constraint_name = 'CHK_REGISTRATION_STATU
 
 COMMIT;
 
+
+
+
