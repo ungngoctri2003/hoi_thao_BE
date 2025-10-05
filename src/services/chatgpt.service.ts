@@ -50,11 +50,15 @@ interface AnalyticsData {
 }
 
 class ChatGPTService {
-  private apiUrl: string = 'https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium';
+  // Updated to use a more reliable model - Microsoft's Phi-2 (small, fast, and reliable)
+  // Alternative models: 'mistralai/Mistral-7B-Instruct-v0.1', 'microsoft/DialoGPT-medium'
+  private apiUrl: string =
+    'https://api-inference.huggingface.co/models/microsoft/Phi-3-mini-4k-instruct';
   private apiKey: string;
 
   constructor() {
-    // Hugging Face API key (optional for free tier)
+    // Hugging Face API key (required for API access)
+    // Get free API key at: https://huggingface.co/settings/tokens
     this.apiKey = process.env.HUGGINGFACE_API_KEY || '';
   }
 
@@ -64,7 +68,7 @@ class ChatGPTService {
         'Content-Type': 'application/json',
       };
 
-      // Add API key if available (optional for free tier)
+      // Add API key if available (required for most models)
       if (this.apiKey) {
         headers['Authorization'] = `Bearer ${this.apiKey}`;
       }
@@ -75,20 +79,35 @@ class ChatGPTService {
         body: JSON.stringify({
           inputs: prompt,
           parameters: {
-            max_length: 500,
+            max_new_tokens: 250,
             temperature: 0.7,
+            top_p: 0.95,
             do_sample: true,
-            return_full_text: false,
+          },
+          options: {
+            wait_for_model: true,
           },
         }),
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Hugging Face API error details:', errorText);
         throw new Error(`Hugging Face API error: ${response.status} ${response.statusText}`);
       }
 
       const data = (await response.json()) as HuggingFaceResponse[];
-      return data[0]?.generated_text || 'Không có phản hồi từ AI';
+
+      // Handle different response formats
+      if (Array.isArray(data) && data[0]?.generated_text) {
+        return data[0].generated_text;
+      } else if (typeof data === 'string') {
+        return data;
+      } else if (data && typeof data === 'object' && 'generated_text' in data) {
+        return (data as any).generated_text;
+      }
+
+      return 'Không có phản hồi từ AI';
     } catch (error) {
       console.error('Hugging Face API error:', error);
       throw error;
