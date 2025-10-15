@@ -260,11 +260,17 @@ export async function sessionEngagement(req: Request, res: Response, next: NextF
   try {
     const sessionId = Number(req.params.id);
     const data = await withConn(async conn => {
-      const messages = await conn.execute(
-        `SELECT COUNT(*) AS CNT FROM MESSAGES WHERE SESSION_ID = :id`,
-        { id: sessionId },
-        { outFormat: oracledb.OUT_FORMAT_OBJECT }
-      );
+      let messages = { rows: [{ CNT: 0 }] };
+      try {
+        messages = await conn.execute(
+          `SELECT COUNT(*) AS CNT FROM MESSAGES WHERE SESSION_ID = :id`,
+          { id: sessionId },
+          { outFormat: oracledb.OUT_FORMAT_OBJECT }
+        );
+      } catch (error) {
+        console.warn('MESSAGES table does not exist, using 0 for message count:', error instanceof Error ? error.message : String(error));
+        messages = { rows: [{ CNT: 0 }] };
+      }
       return { messages: Number((messages.rows as Array<{ CNT: number }>)[0]?.CNT || 0) };
     });
     res.json(ok(data));
@@ -281,11 +287,17 @@ export async function networking(_req: Request, res: Response, next: NextFunctio
         {},
         { outFormat: oracledb.OUT_FORMAT_OBJECT }
       );
-      const messages = await conn.execute(
-        `SELECT COUNT(*) AS CNT FROM MESSAGES`,
-        {},
-        { outFormat: oracledb.OUT_FORMAT_OBJECT }
-      );
+      let messages = { rows: [{ CNT: 0 }] };
+      try {
+        messages = await conn.execute(
+          `SELECT COUNT(*) AS CNT FROM MESSAGES`,
+          {},
+          { outFormat: oracledb.OUT_FORMAT_OBJECT }
+        );
+      } catch (error) {
+        console.warn('MESSAGES table does not exist, using 0 for message count:', error instanceof Error ? error.message : String(error));
+        messages = { rows: [{ CNT: 0 }] };
+      }
       return {
         matches: Number((matches.rows as Array<{ CNT: number }>)[0]?.CNT || 0),
         messages: Number((messages.rows as Array<{ CNT: number }>)[0]?.CNT || 0),
@@ -408,13 +420,19 @@ export async function conferenceAIAnalytics(req: Request, res: Response, next: N
       );
 
       // Get total interactions for this conference
-      const totalMessages = await conn.execute(
-        `SELECT COUNT(*) AS CNT FROM MESSAGES m
-         JOIN SESSIONS s ON m.SESSION_ID = s.ID
-         WHERE s.CONFERENCE_ID = :conferenceId`,
-        { conferenceId },
-        { outFormat: oracledb.OUT_FORMAT_OBJECT }
-      );
+      let totalMessages = { rows: [{ CNT: 0 }] };
+      try {
+        totalMessages = await conn.execute(
+          `SELECT COUNT(*) AS CNT FROM MESSAGES m
+           JOIN SESSIONS s ON m.SESSION_ID = s.ID
+           WHERE s.CONFERENCE_ID = :conferenceId`,
+          { conferenceId },
+          { outFormat: oracledb.OUT_FORMAT_OBJECT }
+        );
+      } catch (error) {
+        console.warn('MESSAGES table does not exist, using 0 for message count:', error instanceof Error ? error.message : String(error));
+        totalMessages = { rows: [{ CNT: 0 }] };
+      }
 
       // Check if CHECKINS table exists before querying it
       let totalCheckins = { rows: [{ CNT: 0 }] };
@@ -775,11 +793,17 @@ export async function globalAIAnalytics(req: Request, res: Response, next: NextF
       );
 
       // Get total interactions (messages + checkins)
-      const totalMessages = await conn.execute(
-        `SELECT COUNT(*) AS CNT FROM MESSAGES`,
-        {},
-        { outFormat: oracledb.OUT_FORMAT_OBJECT }
-      );
+      let totalMessages = { rows: [{ CNT: 0 }] };
+      try {
+        totalMessages = await conn.execute(
+          `SELECT COUNT(*) AS CNT FROM MESSAGES`,
+          {},
+          { outFormat: oracledb.OUT_FORMAT_OBJECT }
+        );
+      } catch (error) {
+        console.warn('MESSAGES table does not exist, using 0 for message count:', error instanceof Error ? error.message : String(error));
+        totalMessages = { rows: [{ CNT: 0 }] };
+      }
       
       // Check if CHECKINS table exists before querying it
       let totalCheckins = { rows: [{ CNT: 0 }] };
